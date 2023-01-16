@@ -1,0 +1,25 @@
+framework:
+    secret: '$ecretf0rt3st'
+    session:
+        handler_id: null
+        cookie_secure: auto
+        cookie_samesite: lax
+    php_errors:
+        log: true
+    test: true
+    http_method_override: false
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    PBaszak\MessengerCacheBundle\:
+        resource: '../../src/*'
+        exclude:
+            - '../../src/{DependencyInjection,MessengerCacheBundle.php}'
+
+    PBaszak\MessengerCacheBundle\Tests\Helper\:
+        resource: '*'
+        exclude:
+            - 'Kernel.php'
