@@ -23,3 +23,9 @@ services:
         resource: '*'
         exclude:
             - 'Kernel.php'
+
+    Symfony\Component\Cache\Adapter\ArrayAdapter:
+    Symfony\Contracts\Cache\CacheInterface:
+        alias: Symfony\Component\Cache\Adapter\ArrayAdapter
+    Symfony\Component\Cache\Adapter\AdapterInterface:
+        alias: Symfony\Component\Cache\Adapter\ArrayAdapter

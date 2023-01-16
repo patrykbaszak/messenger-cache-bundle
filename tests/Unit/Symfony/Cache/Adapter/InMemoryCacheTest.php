@@ -9,16 +9,26 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Messenger\HandleTrait;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
 /** @group unit */
-class ArrayAdapterTest extends KernelTestCase
+class InMemoryCacheTest extends KernelTestCase
 {
     use HandleTrait;
+
+    private CacheInterface $cache;
 
     protected function setUp(): void
     {
         $this->messageBus = self::getContainer()->get(MessageBusInterface::class);
+        $this->cache = self::getContainer()->get(CacheInterface::class);
+    }
+
+    /** @test */
+    public function shouldBeInstanceOfArrayAdapter(): void
+    {
+        $this->assertInstanceOf(ArrayAdapter::class, $this->cache);
     }
 
     /** @test */
@@ -40,8 +50,7 @@ class ArrayAdapterTest extends KernelTestCase
 
     private function getString(int $length): string
     {
-        static $adapter = new ArrayAdapter();
-        return $adapter->get('test_length_' . (string) $length, function (ItemInterface $item) use ($length) {
+        return $this->cache->get('test_length_' . (string) $length, function (ItemInterface $item) use ($length) {
             return $this->handle(
                 new GetString($length)
             );
