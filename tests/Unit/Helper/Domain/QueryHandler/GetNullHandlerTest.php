@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace PBaszak\MessengerCacheBundle\Tests\Unit\Helper\Domain\CommandHandler;
+namespace PBaszak\MessengerCacheBundle\Tests\Unit\Helper\Domain\QueryHandler;
 
-use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Command\DoNothing;
+use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetNull;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 /** @group unit */
-class DoNothingHandlerTest extends KernelTestCase
+class GetNullHandlerTest extends KernelTestCase
 {
     use HandleTrait;
 
@@ -20,12 +20,12 @@ class DoNothingHandlerTest extends KernelTestCase
     }
 
     /** @test */
-    public function shouldReturnNothing(): void
+    public function shouldReturnNull(): void
     {
         $output = $this->handle(
-            new DoNothing()
+            new GetNull()
         );
 
-        $this->assertFalse(isset($output));
+        $this->assertNull($output);
     }
 }
