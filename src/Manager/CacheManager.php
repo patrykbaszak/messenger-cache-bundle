@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Manager;
 
+use LogicException;
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Contract\Cacheable;
 use PBaszak\MessengerCacheBundle\Contract\CacheManagerInterface;
@@ -16,7 +17,7 @@ use Symfony\Component\Messenger\Envelope;
 class CacheManager implements CacheManagerInterface
 {
     /**
-     * @param array<string,AdapterInterface>
+     * @param array<string,AdapterInterface> $adapters
      */
     public function __construct(
         private CacheTagProviderInterface $tagProvider,
@@ -72,5 +73,26 @@ class CacheManager implements CacheManagerInterface
         }
 
         return $item->get()->value;
+    }
+
+    public function delete(string $cacheKey, ?string $adapter = null, ?Cache $cache = null, ?Cacheable $message = null): bool
+    {
+        if (empty(array_filter([$adapter, $cache, $message]))) {
+            throw new LogicException('At least one argument is required in addition to cacheKey.');
+        }
+
+        if ($message && !$cache && !$adapter) {
+            $cache = (new ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+            $adapter = $cache->adapter;
+        }
+
+        if ($cache && !$adapter) {
+            $adapter = $cache->adapter;
+        }
+
+        /** @var AdapterInterface */
+        $pool = $this->adapters[$adapter ?? self::DEFAULT_ADAPTER_ALIAS];
+        
+        return $pool->deleteItem($cacheKey);
     }
 }
