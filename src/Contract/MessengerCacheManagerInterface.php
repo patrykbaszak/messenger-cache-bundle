@@ -7,7 +7,7 @@ namespace PBaszak\MessengerCacheBundle\Contract;
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use Symfony\Component\Messenger\Envelope;
 
-interface CacheManagerInterface
+interface MessengerCacheManagerInterface
 {
     public const DEFAULT_ADAPTER_ALIAS = 'default';
 

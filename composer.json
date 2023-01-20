@@ -44,6 +44,7 @@
         }
     },
     "scripts": {
+        "cache:clear": "rm -rf var/cache/*",
         "phpunit": "vendor/bin/phpunit",
         "test:unit": "@phpunit --group unit tests",
         "test:func": "@phpunit --group func tests"

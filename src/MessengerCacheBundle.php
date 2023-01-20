@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle;
 
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 /**
@@ -18,5 +19,12 @@ class MessengerCacheBundle extends AbstractBundle
     public function getPath(): string
     {
         return dirname(__DIR__);
+    }
+
+    public function build(ContainerBuilder $container)
+    {
+        parent::build($container);
+
+        $container->addCompilerPass(new DependencyInjection\MessengerCacheManagerCompilerPass());
     }
 }

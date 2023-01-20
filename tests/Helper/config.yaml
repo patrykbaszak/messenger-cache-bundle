@@ -29,3 +29,6 @@ services:
         alias: Symfony\Component\Cache\Adapter\ArrayAdapter
     Symfony\Component\Cache\Adapter\AdapterInterface:
         alias: Symfony\Component\Cache\Adapter\ArrayAdapter
+
+    PBaszak\MessengerCacheBundle\Contract\MessengerCacheManagerInterface:
+        alias: PBaszak\MessengerCacheBundle\Manager\MessengerCacheManager

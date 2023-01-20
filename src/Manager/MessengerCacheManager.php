@@ -7,14 +7,15 @@ namespace PBaszak\MessengerCacheBundle\Manager;
 use LogicException;
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Contract\Cacheable;
-use PBaszak\MessengerCacheBundle\Contract\CacheManagerInterface;
+use PBaszak\MessengerCacheBundle\Contract\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Contract\CacheTagProviderInterface;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 use ReflectionClass;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Messenger\Envelope;
+use Throwable;
 
-class CacheManager implements CacheManagerInterface
+class MessengerCacheManager implements MessengerCacheManagerInterface
 {
     /**
      * @param array<string,AdapterInterface> $adapters
@@ -27,7 +28,12 @@ class CacheManager implements CacheManagerInterface
 
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope
     {
-        $cache = (new ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+        try {
+            $cache = (new ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+        } catch (Throwable) {
+            throw new LogicException(sprintf('The %s class has not declared the %s attribute which is required.', get_class($message), Cache::class));
+        }
+
         /** @var AdapterInterface */
         $adapter = $this->adapters[$cache->adapter ?? self::DEFAULT_ADAPTER_ALIAS];
 

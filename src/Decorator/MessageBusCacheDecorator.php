@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\Decorator;
 
 use PBaszak\MessengerCacheBundle\Contract\Cacheable;
-use PBaszak\MessengerCacheBundle\Contract\CacheKeyProviderInterface;
-use PBaszak\MessengerCacheBundle\Contract\CacheManagerInterface;
+use PBaszak\MessengerCacheBundle\Contract\MessengerCacheKeyProviderInterface;
+use PBaszak\MessengerCacheBundle\Contract\MessengerCacheManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -16,8 +16,8 @@ class MessageBusCacheDecorator implements MessageBusInterface
 {
     public function __construct(
         private MessageBusInterface $decorated,
-        private CacheKeyProviderInterface $cacheKeyProvider,
-        private CacheManagerInterface $cacheManager,
+        private MessengerCacheKeyProviderInterface $cacheKeyProvider,
+        private MessengerCacheManagerInterface $cacheManager,
     ) {
     }
 

@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Decorator;
 
+use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Contract\Cacheable;
-use PBaszak\MessengerCacheBundle\Contract\CacheManagerInterface;
+use PBaszak\MessengerCacheBundle\Contract\MessengerCacheManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
 
-#[AsDecorator(CacheManagerInterface::class, 1)]
-class CacheManagerChecksDecorator implements CacheManagerInterface
+#[AsDecorator(MessengerCacheManagerInterface::class, 1)]
+class MessengerCacheManagerChecksDecorator implements MessengerCacheManagerInterface
 {
     public function __construct(
-        private CacheManagerInterface $decorated,
+        private MessengerCacheManagerInterface $decorated,
     ) {
     }
 
@@ -22,5 +23,10 @@ class CacheManagerChecksDecorator implements CacheManagerInterface
         return method_exists($message, 'isCacheable') && !$message->isCacheable()
             ? $callback()
             : $this->decorated->get($message, $stamps, $cacheKey, $callback);
+    }
+
+    public function delete(string $cacheKey, ?string $adapter = null, ?Cache $cache = null, ?Cacheable $message = null): bool
+    {
+        return $this->decorated->{__FUNCTION__}(...func_get_args());
     }
 }
