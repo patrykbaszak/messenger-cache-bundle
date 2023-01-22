@@ -12,7 +12,7 @@ interface MessengerCacheManagerInterface
 {
     public const DEFAULT_ADAPTER_ALIAS = 'default';
 
-    public const DEFAULT_CACHE_FILE = 'messenger_cache.php';
+    public const DEFAULT_CACHE_FILE = '/messenger_cache.php';
 
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope;
 

@@ -30,5 +30,10 @@ services:
     Symfony\Component\Cache\Adapter\AdapterInterface:
         alias: Symfony\Component\Cache\Adapter\ArrayAdapter
 
+    PBaszak\MessengerCacheBundle\Manager\MessengerCacheManager:
+        arguments:
+            $kernelCacheDir: '%kernel.cache_dir%'
+            
     PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface:
         alias: PBaszak\MessengerCacheBundle\Manager\MessengerCacheManager
+        
