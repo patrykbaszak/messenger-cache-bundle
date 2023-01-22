@@ -8,3 +8,5 @@ services:
         volumes: 
             - .:/app:cached
         working_dir: /app
+        env_file:
+            - .env.local
