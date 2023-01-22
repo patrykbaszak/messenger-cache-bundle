@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace PBaszak\MessengerCacheBundle\Contract;
+namespace PBaszak\MessengerCacheBundle\Contract\Replaceable;
+
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 
 interface MessengerCacheKeyProviderInterface
 {

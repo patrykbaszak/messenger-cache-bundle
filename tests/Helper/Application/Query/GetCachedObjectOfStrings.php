@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query;
 
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 
 #[Cache()]
-class GetCachedObjectOfStrings extends GetObjectOfStrings
+class GetCachedObjectOfStrings extends GetObjectOfStrings implements Cacheable
 {
     
 }

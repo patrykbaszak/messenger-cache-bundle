@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Provider;
 
-use PBaszak\MessengerCacheBundle\Contract\CacheTagProviderInterface;
+use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheOwnerTagProviderInterface;
 
-class CacheTagProvider implements CacheTagProviderInterface
+class CacheTagProvider implements MessengerCacheOwnerTagProviderInterface
 {
-    public function createTag(string $group, ?string $groupOwnerId = null): string
+    public function createGroupTag(string $group, ?string $groupOwnerId = null): string
     {
         return implode('_', array_filter(func_get_args()));
+    }
+
+    public function createOwnerTag(string $ownerId): string
+    {
+        return $ownerId;
     }
 }

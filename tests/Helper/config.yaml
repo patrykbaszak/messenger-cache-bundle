@@ -30,5 +30,5 @@ services:
     Symfony\Component\Cache\Adapter\AdapterInterface:
         alias: Symfony\Component\Cache\Adapter\ArrayAdapter
 
-    PBaszak\MessengerCacheBundle\Contract\MessengerCacheManagerInterface:
+    PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface:
         alias: PBaszak\MessengerCacheBundle\Manager\MessengerCacheManager

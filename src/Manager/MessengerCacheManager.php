@@ -6,12 +6,17 @@ namespace PBaszak\MessengerCacheBundle\Manager;
 
 use LogicException;
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
-use PBaszak\MessengerCacheBundle\Contract\Cacheable;
-use PBaszak\MessengerCacheBundle\Contract\MessengerCacheManagerInterface;
-use PBaszak\MessengerCacheBundle\Contract\CacheTagProviderInterface;
+use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTtl;
+use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
+use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
+use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheOwnerTagProviderInterface;
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 use ReflectionClass;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
+use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Messenger\Envelope;
 use Throwable;
 
@@ -21,9 +26,16 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
      * @param array<string,AdapterInterface> $adapters
      */
     public function __construct(
-        private CacheTagProviderInterface $tagProvider,
+        private MessengerCacheOwnerTagProviderInterface $tagProvider,
         private array $adapters = [],
+        private string $kernelCacheDir = '',
     ) {
+        if (empty($this->adapters)) {
+            $this->adapters[self::DEFAULT_ADAPTER_ALIAS] = new PhpArrayAdapter(
+                $kernelCacheDir . self::DEFAULT_CACHE_FILE,
+                new ArrayAdapter(storeSerialized: false)
+            );
+        }
     }
 
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope
@@ -40,10 +52,12 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         $forceCacheRefresh = false;
         foreach ($stamps as $stamp) {
             if ($stamp instanceof ForceCacheRefreshStamp) {
-                $forceCacheRefresh = true; break;
+                $forceCacheRefresh = true;
+                break;
             }
         }
 
+        /** @var CacheItem $item */
         $item = $adapter->getItem($cacheKey);
 
         if ($cache->refreshAfter && $item->isHit() && !$forceCacheRefresh) {
@@ -61,16 +75,30 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
                     'value' => $callback()
                 ]
             );
-            $item->expiresAfter($cache->ttl ?? $message->getDynamicTtl());
-            $item->tag($cache->tags);
+
+            if ($message instanceof DynamicTtl) {
+                $item->expiresAfter($message->getDynamicTtl());
+            } else {
+                $item->expiresAfter($cache->ttl);
+            }
+
+            if ($cache->tags) {
+                $item->tag($cache->tags);
+            }
 
             if ($cache->group) {
                 $item->tag(
-                    $this->tagProvider->createTag(
+                    $this->tagProvider->createGroupTag(
                         $cache->group,
-                        method_exists($message, 'getOwnerIdentifier')
+                        $message instanceof OwnerIdentifier
                             ? $message->getOwnerIdentifier()
                             : null
+                    )
+                );
+            } elseif ($message instanceof OwnerIdentifier) {
+                $item->tag(
+                    $this->tagProvider->createOwnerTag(
+                        $message->getOwnerIdentifier()
                     )
                 );
             }
@@ -98,7 +126,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
 
         /** @var AdapterInterface */
         $pool = $this->adapters[$adapter ?? self::DEFAULT_ADAPTER_ALIAS];
-        
+
         return $pool->deleteItem($cacheKey);
     }
 }

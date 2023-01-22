@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Tests\Unit\Symfony\Cache\Adapter;
 
-use PBaszak\MessengerCacheBundle\Contract\Cacheable;
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetString;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
@@ -56,7 +56,7 @@ class InMemoryCacheTest extends KernelTestCase
     {
         return $this->cache->get('test_length_' . (string) $length, function (ItemInterface $item) use ($length) {
             return $this->handle(
-                new GetCachedString($length)
+                new GetString($length)
             );
         });
     }

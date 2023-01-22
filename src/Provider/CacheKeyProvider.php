@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Provider;
 
-use PBaszak\MessengerCacheBundle\Contract\Cacheable;
-use PBaszak\MessengerCacheBundle\Contract\MessengerCacheKeyProviderInterface;
+use PBaszak\MessengerCacheBundle\Contract\Optional\HashableInstance;
+use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
+use PBaszak\MessengerCacheBundle\Contract\Optional\UniqueHash;
+use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheKeyProviderInterface;
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 
 class CacheKeyProvider implements MessengerCacheKeyProviderInterface
 {
@@ -20,11 +23,11 @@ class CacheKeyProvider implements MessengerCacheKeyProviderInterface
             '|',
             array_filter(
                 [
-                    method_exists($message, 'getOwnerIdentifier') ? $message->getOwnerIdentifier() : null,
+                    $message instanceof OwnerIdentifier ? $message->getOwnerIdentifier() : null,
                     hash($this->hashAlgo, get_class($message)),
-                    method_exists($message, 'getUniqueHash') ? $message->getUniqueHash() : hash(
+                    $message instanceof UniqueHash ? $message->getUniqueHash() : hash(
                         $this->hashAlgo,
-                        serialize(method_exists($message, 'getHashableInstance') ? $message->getHashableInstance() : $message)
+                        serialize($message instanceof HashableInstance ? $message->getHashableInstance() : $message)
                     )
                 ]
             )

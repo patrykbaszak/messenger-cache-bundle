@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\Decorator;
 
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
-use PBaszak\MessengerCacheBundle\Contract\Cacheable;
-use PBaszak\MessengerCacheBundle\Contract\MessengerCacheManagerInterface;
+use PBaszak\MessengerCacheBundle\Contract\Optional\CacheableCallback;
+use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
 
@@ -20,7 +21,7 @@ class MessengerCacheManagerChecksDecorator implements MessengerCacheManagerInter
 
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope
     {
-        return method_exists($message, 'isCacheable') && !$message->isCacheable()
+        return $message instanceof CacheableCallback && !$message->isCacheable()
             ? $callback()
             : $this->decorated->get($message, $stamps, $cacheKey, $callback);
     }

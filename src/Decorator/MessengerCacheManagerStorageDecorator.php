@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\Decorator;
 
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
-use PBaszak\MessengerCacheBundle\Contract\Cacheable;
-use PBaszak\MessengerCacheBundle\Contract\MessengerCacheManagerInterface;
+use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
 

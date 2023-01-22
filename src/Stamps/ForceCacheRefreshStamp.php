@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Stamps;
 
-use Symfony\Component\Messenger\Stamp\NonSendableStampInterface;
+use Symfony\Component\Messenger\Stamp\StampInterface;
 
-class ForceCacheRefreshStamp implements NonSendableStampInterface
+class ForceCacheRefreshStamp implements StampInterface
 {
 }
