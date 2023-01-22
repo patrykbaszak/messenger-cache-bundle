@@ -15,7 +15,7 @@ class StringProviderTest extends TestCase
     {
         $stringProvider = new StringProvider();
 
-        for ($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 10; ++$i) {
             $length = rand(1, 100);
             $string = $stringProvider->generateRandomString($length);
 

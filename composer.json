@@ -45,6 +45,9 @@
     },
     "scripts": {
         "cache:clear": "rm -rf var/cache/*",
+        "code:fix": "vendor/bin/php-cs-fixer fix",
+        "code:analyse": "vendor/bin/phpstan analyse src -c tools/phpstan/fpm-config.neon",
+        "code:analyse:generate-baseline": "vendor/bin/phpstan analyse src -c tools/phpstan/fpm-config.neon --generate-baseline tools/phpstan/fpm-baseline.neon --allow-empty-baseline",
         "phpunit": "vendor/bin/phpunit",
         "test:unit": "@phpunit --group unit tests",
         "test:func": "@phpunit --group func tests"

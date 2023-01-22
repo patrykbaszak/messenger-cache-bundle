@@ -27,6 +27,6 @@ class GetObjectHandlerTest extends KernelTestCase
         );
 
         $this->assertIsObject($output);
-        $this->assertEquals((object)[], $output);
+        $this->assertEquals((object) [], $output);
     }
 }

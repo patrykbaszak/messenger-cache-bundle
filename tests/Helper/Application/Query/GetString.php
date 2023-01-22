@@ -8,5 +8,6 @@ class GetString
 {
     public function __construct(
         public readonly int $length = 10,
-    ) {}
+    ) {
+    }
 }

@@ -17,7 +17,8 @@ class MessengerCacheManagerStorageDecorator implements MessengerCacheManagerInte
 
     public function __construct(
         private MessengerCacheManagerInterface $decorated,
-    ) {}
+    ) {
+    }
 
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope
     {

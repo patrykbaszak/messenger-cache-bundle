@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Manager;
 
-use LogicException;
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTtl;
 use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
@@ -12,7 +11,6 @@ use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInter
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheOwnerTagProviderInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
-use ReflectionClass;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
@@ -32,7 +30,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     ) {
         if (empty($this->adapters)) {
             $this->adapters[self::DEFAULT_ADAPTER_ALIAS] = new PhpArrayAdapter(
-                $kernelCacheDir . self::DEFAULT_CACHE_FILE,
+                $kernelCacheDir.self::DEFAULT_CACHE_FILE,
                 new ArrayAdapter(storeSerialized: false)
             );
         }
@@ -41,9 +39,9 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope
     {
         try {
-            $cache = (new ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+            $cache = (new \ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
         } catch (Throwable) {
-            throw new LogicException(sprintf('The %s class has not declared the %s attribute which is required.', get_class($message), Cache::class));
+            throw new \LogicException(sprintf('The %s class has not declared the %s attribute which is required.', get_class($message), Cache::class));
         }
 
         /** @var AdapterInterface */
@@ -72,7 +70,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
             $item->set(
                 (object) [
                     'created' => time(),
-                    'value' => $callback()
+                    'value' => $callback(),
                 ]
             );
 
@@ -112,11 +110,11 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     public function delete(string $cacheKey, ?string $adapter = null, ?Cache $cache = null, ?Cacheable $message = null): bool
     {
         if (empty(array_filter([$adapter, $cache, $message]))) {
-            throw new LogicException('At least one argument is required in addition to cacheKey.');
+            throw new \LogicException('At least one argument is required in addition to cacheKey.');
         }
 
         if ($message && !$cache && !$adapter) {
-            $cache = (new ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+            $cache = (new \ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
             $adapter = $cache->adapter;
         }
 

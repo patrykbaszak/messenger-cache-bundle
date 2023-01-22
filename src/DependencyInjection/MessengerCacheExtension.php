@@ -11,6 +11,5 @@ class MessengerCacheExtension extends ConfigurableExtension
 {
     protected function loadInternal(array $mergedConfig, ContainerBuilder $container): void
     {
-        
     }
 }

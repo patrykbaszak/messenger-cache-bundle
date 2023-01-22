@@ -10,5 +10,4 @@ use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 #[Cache()]
 class GetCachedString extends GetString implements Cacheable
 {
-
 }

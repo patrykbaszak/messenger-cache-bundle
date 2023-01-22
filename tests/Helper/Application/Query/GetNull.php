@@ -6,5 +6,4 @@ namespace PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query;
 
 class GetNull
 {
-    
 }

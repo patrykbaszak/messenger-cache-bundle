@@ -12,6 +12,6 @@ class GetObjectHandler
 {
     public function __invoke(GetObject $query): object
     {
-        return (object)[];
+        return (object) [];
     }
 }

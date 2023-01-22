@@ -71,7 +71,8 @@ class GetStringsHandlerTest extends KernelTestCase
         $this->assertIsObject($output);
 
         foreach ($output as $string) {
-            $i ??= 0; $i++;
+            $i ??= 0;
+            ++$i;
             $this->assertEquals($length, strlen($string));
         }
 

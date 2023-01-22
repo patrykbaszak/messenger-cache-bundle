@@ -14,18 +14,18 @@ class Kernel extends BaseKernel
 
     private const BUNDLES = [
         \Symfony\Bundle\FrameworkBundle\FrameworkBundle::class,
-        \PBaszak\MessengerCacheBundle\MessengerCacheBundle::class
+        \PBaszak\MessengerCacheBundle\MessengerCacheBundle::class,
     ];
 
     public function registerBundles(): iterable
     {
         foreach (self::BUNDLES as $bundle) {
-            yield new $bundle;
+            yield new $bundle();
         }
     }
 
     protected function configureContainer(ContainerConfigurator $container): void
     {
-        $container->import(__DIR__ . '/config.yaml');
+        $container->import(__DIR__.'/config.yaml');
     }
 }

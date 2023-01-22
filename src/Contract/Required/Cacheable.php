@@ -6,5 +6,4 @@ namespace PBaszak\MessengerCacheBundle\Contract\Required;
 
 interface Cacheable
 {
-    
 }

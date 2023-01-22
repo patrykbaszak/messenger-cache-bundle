@@ -34,7 +34,7 @@ class GetStringsCollectionHandlerTest extends KernelTestCase
 
         $this->assertInstanceOf(StringsCollection::class, $output);
         $this->assertEquals($numberOfItems, $output->count);
-        
+
         foreach ($output->items as $item) {
             $this->assertInstanceOf(Strings::class, $item);
             $this->assertCount($numberOfStrings, $item->strings);

@@ -14,6 +14,6 @@ class MessengerCacheManagerCompilerPass implements CompilerPassInterface
     public function process(ContainerBuilder $container): void
     {
         $container->registerForAutoconfiguration(MessengerCacheManagerInterface::class)
-            ->addTag(MessengerCacheBundle::DI_ALIAS . '.messenger_cache_manager');
+            ->addTag(MessengerCacheBundle::DI_ALIAS.'.messenger_cache_manager');
     }
 }

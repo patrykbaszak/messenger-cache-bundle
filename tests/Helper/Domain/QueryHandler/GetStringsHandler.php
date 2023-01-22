@@ -22,7 +22,7 @@ class GetStringsHandler
     public function __invoke(GetStrings $query): array|object
     {
         $output = [];
-        for ($i = 1; $i <= $query->numberOfStrings; $i++) {
+        for ($i = 1; $i <= $query->numberOfStrings; ++$i) {
             $output[] = $this->stringProvider->generateRandomString($query->stringLength);
         }
 

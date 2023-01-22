@@ -21,7 +21,8 @@ class CacheKeyProviderTest extends TestCase
         $length = rand(1, 100);
 
         $message = new class($length) extends GetString implements Cacheable, UniqueHash {
-            public function getUniqueHash(): string {
+            public function getUniqueHash(): string
+            {
                 return (string) $this->length;
             }
         };
@@ -36,7 +37,8 @@ class CacheKeyProviderTest extends TestCase
         $length = rand(1, 100);
 
         $message = new class($length) extends GetString implements Cacheable, UniqueHash {
-            public function getUniqueHash(): string {
+            public function getUniqueHash(): string
+            {
                 return (string) $this->length;
             }
         };

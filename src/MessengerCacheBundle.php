@@ -9,7 +9,7 @@ use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 /**
  * Bundle.
- * 
+ *
  * @author Patryk Baszak <patryk.baszak@gmail.com>
  */
 class MessengerCacheBundle extends AbstractBundle

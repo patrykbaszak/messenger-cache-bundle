@@ -28,7 +28,7 @@ class CacheKeyProvider implements MessengerCacheKeyProviderInterface
                     $message instanceof UniqueHash ? $message->getUniqueHash() : hash(
                         $this->hashAlgo,
                         serialize($message instanceof HashableInstance ? $message->getHashableInstance() : $message)
-                    )
+                    ),
                 ]
             )
         );
