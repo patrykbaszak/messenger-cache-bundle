@@ -8,7 +8,7 @@ use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheOwnerTagProv
 
 class CacheTagProvider implements MessengerCacheOwnerTagProviderInterface
 {
-    public function createGroupTag(string $group, ?string $groupOwnerId = null): string
+    public function createGroupTag(string $group, ?string $groupId = null): string
     {
         return implode('_', array_filter(func_get_args()));
     }

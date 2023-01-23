@@ -24,4 +24,4 @@ services:
         alias: Symfony\Component\Cache\Adapter\ArrayAdapter
     Symfony\Component\Cache\Adapter\PhpArrayAdapter:
         arguments:
-            - '%kernel.cache_dir%/cache.php'
+            - '%kernel.cache_dir%/messenger_cache.php'
