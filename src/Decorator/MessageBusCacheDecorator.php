@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-#[AsDecorator(MessageBusInterface::class)]
+#[AsDecorator('messenger.bus.default')]
 class MessageBusCacheDecorator implements MessageBusInterface
 {
     public function __construct(

@@ -23,9 +23,4 @@ class Kernel extends BaseKernel
             yield new $bundle();
         }
     }
-
-    protected function configureContainer(ContainerConfigurator $container): void
-    {
-        $container->import(__DIR__.'/config.yaml');
-    }
 }

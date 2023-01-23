@@ -1,0 +1,21 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    PBaszak\MessengerCacheBundle\:
+        resource: '../../*'
+        exclude:
+            - '../../{Resources,DependencyInjection,MessengerCacheBundle.php}'
+
+    # Symfony\Component\Cache\Adapter\:
+    #     resource: '%kernel.project_dir%/vendor/symfony/cache/Adapter/*'
+
+    messenger_cache.manager:
+        class: PBaszak\MessengerCacheBundle\Manager\MessengerCacheManager
+        # arguments:
+            # $kernelCacheDir: '%kernel.cache_dir%'
+            # $adapters: ['%messenger_cache.adapters%']
+
+    PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface:
+        alias: messenger_cache.manager

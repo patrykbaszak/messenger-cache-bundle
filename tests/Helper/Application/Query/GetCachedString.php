@@ -7,7 +7,7 @@ namespace PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query;
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 
-#[Cache()]
+#[Cache(adapter: 'runtime')]
 class GetCachedString extends GetString implements Cacheable
 {
 }

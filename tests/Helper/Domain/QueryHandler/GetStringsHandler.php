@@ -12,7 +12,7 @@ use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetStrings;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler()]
-class GetStringsHandler
+class GetStringsHandler implements \Symfony\Component\Messenger\Handler\MessageHandlerInterface
 {
     public function __construct(
         private StringProviderInterface $stringProvider

@@ -1,0 +1,4 @@
+messenger_cache:
+    adapters:
+        default: 'Symfony\Component\Cache\Adapter\PhpArrayAdapter'
+        runtime: 'Symfony\Component\Cache\Adapter\ArrayAdapter'

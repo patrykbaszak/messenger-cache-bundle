@@ -16,7 +16,7 @@ class DoNothingHandlerTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        $this->messageBus = self::getContainer()->get(MessageBusInterface::class);
+        $this->messageBus = self::getContainer()->get('messenger.bus.default');
     }
 
     /** @test */

@@ -22,7 +22,7 @@ class InMemoryCacheTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        $this->messageBus = self::getContainer()->get(MessageBusInterface::class);
+        $this->messageBus = self::getContainer()->get('messenger.bus.default');
         // $this->cache = self::getContainer()->get(AdapterInterface::class);
         $this->cache = new ArrayAdapter();
     }
