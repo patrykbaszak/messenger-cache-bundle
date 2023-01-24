@@ -9,7 +9,6 @@ use PBaszak\MessengerCacheBundle\Tests\Helper\Application\DTO\StringsCollection;
 use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetStringsCollection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 /** @group unit */
 class GetStringsCollectionHandlerTest extends KernelTestCase
@@ -18,7 +17,7 @@ class GetStringsCollectionHandlerTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        $this->messageBus = self::getContainer()->get(MessageBusInterface::class);
+        $this->messageBus = self::getContainer()->get('messenger.bus.default');
     }
 
     /** @test */
@@ -34,7 +33,7 @@ class GetStringsCollectionHandlerTest extends KernelTestCase
 
         $this->assertInstanceOf(StringsCollection::class, $output);
         $this->assertEquals($numberOfItems, $output->count);
-        
+
         foreach ($output->items as $item) {
             $this->assertInstanceOf(Strings::class, $item);
             $this->assertCount($numberOfStrings, $item->strings);

@@ -10,7 +10,6 @@ use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetObjectOfStrin
 use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetStrings;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 /** @group unit */
 class GetStringsHandlerTest extends KernelTestCase
@@ -19,7 +18,7 @@ class GetStringsHandlerTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        $this->messageBus = self::getContainer()->get(MessageBusInterface::class);
+        $this->messageBus = self::getContainer()->get('messenger.bus.default');
     }
 
     /** @test */
@@ -69,10 +68,10 @@ class GetStringsHandlerTest extends KernelTestCase
         );
 
         $this->assertIsObject($output);
-        // $this->assertCount($numberOfStrings, $output);
 
         foreach ($output as $string) {
-            $i ??= 0; $i++;
+            $i ??= 0;
+            ++$i;
             $this->assertEquals($length, strlen($string));
         }
 

@@ -13,7 +13,8 @@ class GetStringHandler
 {
     public function __construct(
         private StringProviderInterface $stringProvider
-    ) {}
+    ) {
+    }
 
     public function __invoke(GetString $query): string
     {

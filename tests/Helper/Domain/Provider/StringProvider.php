@@ -11,7 +11,7 @@ class StringProvider implements StringProviderInterface
     public function generateRandomString(int $length): string
     {
         $repeatXTimes = (int) ceil($length / 61); // 61 follows from the character table below
-        
+
         return substr(
             str_shuffle(
                 str_repeat(

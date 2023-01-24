@@ -4,19 +4,37 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Provider;
 
-use PBaszak\MessengerCacheBundle\Contract\CacheKeyProviderInterface;
+use PBaszak\MessengerCacheBundle\Contract\Optional\HashableInstance;
+use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
+use PBaszak\MessengerCacheBundle\Contract\Optional\UniqueHash;
+use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheKeyProviderInterface;
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
+use Symfony\Component\Messenger\Stamp\StampInterface;
 
-class CacheKeyProvider implements CacheKeyProviderInterface
+class CacheKeyProvider implements MessengerCacheKeyProviderInterface
 {
-    /** @see https://php.watch/articles/php-hash-benchmark */
-    public const HASH_ALGO = 'xxh3';
-
     public function __construct(
         private string $hashAlgo = self::HASH_ALGO
-    ) {}
+    ) {
+    }
 
-    public function createKey(object $message, array $stamps = []): string
+    /**
+     * @param StampInterface[] $stamps
+     */
+    public function createKey(Cacheable $message, array $stamps = []): string
     {
-        return hash($this->hashAlgo, serialize($message));
+        return implode(
+            '|',
+            array_filter(
+                [
+                    $message instanceof OwnerIdentifier ? $message->getOwnerIdentifier() : null,
+                    hash($this->hashAlgo, get_class($message)),
+                    $message instanceof UniqueHash ? $message->getUniqueHash() : hash(
+                        $this->hashAlgo,
+                        serialize($message instanceof HashableInstance ? $message->getHashableInstance() : $message)
+                    ),
+                ]
+            )
+        );
     }
 }

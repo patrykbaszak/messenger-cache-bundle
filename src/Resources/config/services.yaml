@@ -1,0 +1,15 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    PBaszak\MessengerCacheBundle\:
+        resource: '../../*'
+        exclude:
+            - '../../{Resources,DependencyInjection,MessengerCacheBundle.php}'
+
+    messenger_cache.manager:
+        class: PBaszak\MessengerCacheBundle\Manager\MessengerCacheManager
+
+    PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface:
+        alias: messenger_cache.manager

@@ -14,12 +14,14 @@ services:
         autowire: true
         autoconfigure: true
 
-    PBaszak\MessengerCacheBundle\:
-        resource: '../../src/*'
-        exclude:
-            - '../../src/{DependencyInjection,MessengerCacheBundle.php}'
-
     PBaszak\MessengerCacheBundle\Tests\Helper\:
-        resource: '*'
+        resource: '../tests/Helper/*'
         exclude:
             - 'Kernel.php'
+
+    Symfony\Component\Cache\Adapter\ArrayAdapter:
+    Symfony\Component\Cache\Adapter\AdapterInterface:
+        alias: Symfony\Component\Cache\Adapter\ArrayAdapter
+    Symfony\Component\Cache\Adapter\PhpArrayAdapter:
+        arguments:
+            - '%kernel.cache_dir%/messenger_cache.php'

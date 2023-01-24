@@ -10,5 +10,6 @@ class GetStringsCollection
         public readonly int $stringLength = 10,
         public readonly int $numberOfStrings = 10,
         public readonly int $numberOfItems = 10,
-    ) {}
+    ) {
+    }
 }

@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle;
 
-use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
  * Bundle.
- * 
+ *
  * @author Patryk Baszak <patryk.baszak@gmail.com>
  */
-class MessengerCacheBundle extends AbstractBundle
+class MessengerCacheBundle extends Bundle
 {
-    public const DI_ALIAS = 'pbaszak_messenger_cache';
+    public const ALIAS = 'messenger_cache';
 
-    public function getPath(): string
+    public function build(ContainerBuilder $container): void
     {
-        return dirname(__DIR__);
+        $container->addCompilerPass(new DependencyInjection\MessengerCacheManagerPass());
     }
 }

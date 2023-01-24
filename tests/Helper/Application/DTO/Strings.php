@@ -8,5 +8,6 @@ class Strings
 {
     public function __construct(
         public readonly array $strings
-    ) {}
+    ) {
+    }
 }
