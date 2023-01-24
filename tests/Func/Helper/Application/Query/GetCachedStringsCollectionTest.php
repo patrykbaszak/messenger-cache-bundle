@@ -6,7 +6,6 @@ namespace PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query;
 
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 /** @group func */
 class GetCachedStringsCollectionTest extends KernelTestCase

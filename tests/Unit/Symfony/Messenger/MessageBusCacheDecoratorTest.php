@@ -7,7 +7,6 @@ namespace PBaszak\MessengerCacheBundle\Tests\Unit\Symfony\Messenger;
 use PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheDecorator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 /** @group unit */
 class MessageBusCacheDecoratorTest extends KernelTestCase

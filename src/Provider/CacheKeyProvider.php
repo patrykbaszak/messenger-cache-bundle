@@ -9,6 +9,7 @@ use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
 use PBaszak\MessengerCacheBundle\Contract\Optional\UniqueHash;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheKeyProviderInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
+use Symfony\Component\Messenger\Stamp\StampInterface;
 
 class CacheKeyProvider implements MessengerCacheKeyProviderInterface
 {
@@ -17,6 +18,9 @@ class CacheKeyProvider implements MessengerCacheKeyProviderInterface
     ) {
     }
 
+    /**
+     * @param StampInterface[] $stamps
+     */
     public function createKey(Cacheable $message, array $stamps = []): string
     {
         return implode(

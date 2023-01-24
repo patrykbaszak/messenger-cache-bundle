@@ -16,6 +16,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
 use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Stamp\StampInterface;
 use Throwable;
 
 class MessengerCacheManager implements MessengerCacheManagerInterface
@@ -26,7 +27,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     public function __construct(
         private MessengerCacheOwnerTagProviderInterface $tagProvider,
         private array $adapters = [],
-        private string $kernelCacheDir = '',
+        string $kernelCacheDir = '',
     ) {
         if (empty($this->adapters)) {
             $this->adapters[self::DEFAULT_ADAPTER_ALIAS] = new PhpArrayAdapter(
@@ -36,6 +37,9 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         }
     }
 
+    /**
+     * @param StampInterface[] $stamps
+     */
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope
     {
         try {

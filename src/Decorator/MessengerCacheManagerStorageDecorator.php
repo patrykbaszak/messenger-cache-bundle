@@ -9,10 +9,12 @@ use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInter
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Stamp\StampInterface;
 
 #[AsDecorator(MessengerCacheManagerInterface::class, 10)]
 class MessengerCacheManagerStorageDecorator implements MessengerCacheManagerInterface
 {
+    /** @var array<string, Envelope> */
     private static array $storage = [];
 
     public function __construct(
@@ -20,6 +22,9 @@ class MessengerCacheManagerStorageDecorator implements MessengerCacheManagerInte
     ) {
     }
 
+    /**
+     * @param StampInterface[] $stamps
+     */
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope
     {
         self::$storage[$cacheKey] ??= $this->decorated->get($message, $stamps, $cacheKey, $callback);

@@ -9,9 +9,10 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class MessengerCacheManagerPass implements CompilerPassInterface
 {
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         $manager = $container->getDefinition('messenger_cache.manager');
+        /** @var array<string,string> */
         $adapters = $container->getParameter('messenger_cache.adapters');
 
         $adapterDefinitions = [];

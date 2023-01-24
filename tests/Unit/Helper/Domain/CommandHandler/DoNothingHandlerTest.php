@@ -7,7 +7,6 @@ namespace PBaszak\MessengerCacheBundle\Tests\Unit\Helper\Domain\CommandHandler;
 use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Command\DoNothing;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 /** @group unit */
 class DoNothingHandlerTest extends KernelTestCase

@@ -9,7 +9,6 @@ use PBaszak\MessengerCacheBundle\Tests\Helper\Application\DTO\StringsCollection;
 use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetStringsCollection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 /** @group unit */
 class GetStringsCollectionHandlerTest extends KernelTestCase

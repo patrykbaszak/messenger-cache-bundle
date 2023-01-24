@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
@@ -17,7 +16,7 @@ class MessengerCacheBundle extends Bundle
 {
     public const ALIAS = 'messenger_cache';
 
-    public function build(ContainerBuilder $container)
+    public function build(ContainerBuilder $container): void
     {
         $container->addCompilerPass(new DependencyInjection\MessengerCacheManagerPass());
     }
