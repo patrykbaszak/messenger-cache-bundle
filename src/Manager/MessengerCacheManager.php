@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\Manager;
 
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
+use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags;
 use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTtl;
 use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
@@ -51,6 +52,10 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
             throw new \LogicException(sprintf('The %s class has not declared the %s attribute which is required.', get_class($message), Cache::class));
         }
 
+        if ($cache->adapter && !in_array($cache->adapter, array_keys($this->adapters), true)) {
+            throw new \LogicException(sprintf('The %s adapter is not configured.', $cache->adapter));
+        }
+
         /** @var AdapterInterface */
         $adapter = $this->adapters[$cache->adapter ?? self::DEFAULT_ADAPTER_ALIAS];
 
@@ -87,11 +92,17 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
                 $item->expiresAfter($cache->ttl);
             }
 
-            if ($cache->tags) {
+            if ($message instanceof DynamicTags ? $message->getDynamicTags() : $cache->tags) {
                 if (!$adapter instanceof TagAwareAdapterInterface) {
                     throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->adapter));
                 }
-                $item->tag($cache->tags);
+                $item->tag(
+                    $message instanceof DynamicTags ?
+                        $message->getDynamicTags() : ($cache->useOwnerIdentifierForTags ?
+                            array_map(fn (string $tag) => $this->tagProvider->createGroupTag($tag, $message->getOwnerIdentifier()), $cache->tags) :
+                            $cache->tags
+                        )
+                );
             }
 
             if ($cache->group) {
@@ -155,15 +166,30 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
             throw new \LogicException('At least one argument (tags, groups or ownerIdentifier) is required.');
         }
 
-        if ($ownerIdentifier) {
-            $tags[] = $this->tagProvider->createOwnerTag($ownerIdentifier);
+        $_tags = [];
+        if ($ownerIdentifier && empty($groups)) {
+            $_tags[] = $this->tagProvider->createOwnerTag($ownerIdentifier);
+        }
+        if ($ownerIdentifier && !empty($groups)) {
+            foreach ($groups as $group) {
+                $_tags[] = $this->tagProvider->createGroupTag($group, $ownerIdentifier);
+            }
+        }
+        if (!empty($tags)) {
+            if ($useOwnerIdentifierForTags && $ownerIdentifier) {
+                foreach ($tags as $tag) {
+                    $_tags[] = $this->tagProvider->createGroupTag($tag, $ownerIdentifier);
+                }
+            } else {
+                $_tags = array_merge($_tags, $tags);
+            }
         }
 
         $result = [];
         foreach ($this->adapters as $alias => $adapter) {
             if ($adapter instanceof TagAwareAdapterInterface) {
-                foreach ($tags as $tag) {
-                    $result[$alias][$tag] = $adapter->invalidateTags([$tag]);
+                foreach ($_tags as $_tag) {
+                    $result[$alias][$_tag] = $adapter->invalidateTags([$_tag]);
                 }
             }
         }

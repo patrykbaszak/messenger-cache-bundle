@@ -1,2 +1,6 @@
 parameters:
-	ignoreErrors: []
+	ignoreErrors:
+		-
+			message: "#^Call to an undefined method PBaszak\\\\MessengerCacheBundle\\\\Contract\\\\Required\\\\Cacheable\\:\\:getOwnerIdentifier\\(\\)\\.$#"
+			count: 1
+			path: ../../src/Manager/MessengerCacheManager.php
