@@ -10,11 +10,11 @@ class CacheTagProvider implements MessengerCacheOwnerTagProviderInterface
 {
     public function createGroupTag(string $group, ?string $groupId = null): string
     {
-        return implode('_', array_filter(func_get_args()));
+        return sprintf('_%s', implode('_', array_filter(func_get_args())));
     }
 
     public function createOwnerTag(string $ownerId): string
     {
-        return $ownerId;
+        return sprintf('_%s', $ownerId);
     }
 }

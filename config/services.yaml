@@ -28,3 +28,11 @@ services:
         arguments:
             - '%kernel.cache_dir%/messenger_cache.php'
             - '@Symfony\Component\Cache\Adapter\AdapterInterface'
+    Predis\Client:
+        arguments:
+            - scheme: redis
+              host: redis
+              port: 6379
+    Symfony\Component\Cache\Adapter\RedisTagAwareAdapter:
+        arguments:
+            - '@Predis\Client'

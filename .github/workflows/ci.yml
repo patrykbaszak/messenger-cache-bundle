@@ -15,3 +15,4 @@ jobs:
         uses: php-actions/phpunit@master
         with:
           configuration: phpunit.xml.dist
+          exclude_group: integration

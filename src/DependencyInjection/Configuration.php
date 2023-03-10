@@ -24,9 +24,12 @@ class Configuration implements ConfigurationInterface
                     ->prototype('scalar')->end()
                     ->children()
                         ->scalarNode('default')->defaultValue(AdapterInterface::class)->isRequired()->end()
+                    ->end()
                 ->end()
+                ->booleanNode('runtime_cache_storage')->defaultFalse()->end()
+                ->booleanNode('cacheable_callback_support')->defaultTrue()->end()
             ->end()
-        ;
+        ->end();
 
         return $treeBuilder;
     }

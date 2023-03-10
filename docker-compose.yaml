@@ -10,3 +10,22 @@ services:
         working_dir: /app
         env_file:
             - .env.local
+    redis:
+        image: redis:alpine3.15
+        restart: always
+        hostname: redis
+        volumes:
+            - ./var/data/redis:/var/lib/redis
+        expose:
+            - 6379
+    
+    rediscommander:
+        image: rediscommander/redis-commander:latest
+        environment:
+            REDIS_HOSTS: local:redis:6379
+        depends_on:
+            - redis
+        links:
+            - redis
+        ports:
+            - 8081:8081

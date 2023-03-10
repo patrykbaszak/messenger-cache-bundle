@@ -1,4 +1,7 @@
 messenger_cache:
     adapters:
+        redis: 'Symfony\Component\Cache\Adapter\RedisTagAwareAdapter'
         default: 'Symfony\Component\Cache\Adapter\PhpArrayAdapter'
         runtime: 'Symfony\Component\Cache\Adapter\ArrayAdapter'
+    runtime_cache_storage: false
+    cacheable_callback_support: true

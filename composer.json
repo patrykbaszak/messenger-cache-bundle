@@ -19,7 +19,8 @@
         "friendsofphp/php-cs-fixer": "^3.13",
         "phpunit/phpunit": "^9.5",
         "symfony/framework-bundle": "^6.2",
-        "symfony/yaml": "^6.2"
+        "symfony/yaml": "^6.2",
+        "predis/predis": "^2.1"
     },
     "license": "MIT",
     "autoload": {
@@ -50,6 +51,7 @@
         "code:analyse:generate-baseline": "vendor/bin/phpstan analyse src -c tools/phpstan/fpm-config.neon --generate-baseline tools/phpstan/fpm-baseline.neon --allow-empty-baseline",
         "phpunit": "vendor/bin/phpunit",
         "test:unit": "@phpunit --group unit tests",
-        "test:func": "@phpunit --group func tests"
+        "test:func": "@phpunit --group func tests",
+        "test:integration": "@phpunit --group integration tests"
     }
 }

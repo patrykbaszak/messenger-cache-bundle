@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Decorator;
 
+use PBaszak\MessengerCacheBundle\Attribute\Invalidate;
+use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheKeyProviderInterface;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Contract\Required\CacheInvalidation;
+use PBaszak\MessengerCacheBundle\Stamp\InvalidationResultsStamp;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\StampInterface;
 
 #[AsDecorator('messenger.bus.default')]
 class MessageBusCacheDecorator implements MessageBusInterface
@@ -22,6 +26,9 @@ class MessageBusCacheDecorator implements MessageBusInterface
     ) {
     }
 
+    /**
+     * @param StampInterface[] $stamps
+     */
     public function dispatch(object $message, array $stamps = []): Envelope
     {
         if ($message instanceof Cacheable) {
@@ -29,10 +36,14 @@ class MessageBusCacheDecorator implements MessageBusInterface
         } elseif ($message instanceof CacheInvalidation) {
             return $this->dispatchCacheInvalidationMessage($message, $stamps);
         }
+
         return $this->decorated->dispatch($message, $stamps);
     }
 
-    private function dispatchCacheableMessage(object $message, array $stamps): Envelope
+    /**
+     * @param StampInterface[] $stamps
+     */
+    private function dispatchCacheableMessage(Cacheable $message, array $stamps): Envelope
     {
         return $this->cacheManager->get(
             $message,
@@ -44,10 +55,63 @@ class MessageBusCacheDecorator implements MessageBusInterface
         );
     }
 
-    private function dispatchCacheInvalidationMessage(object $message, array $stamps): Envelope
+    /**
+     * @param StampInterface[] $stamps
+     */
+    private function dispatchCacheInvalidationMessage(CacheInvalidation $message, array $stamps): Envelope
     {
-        // $this->cacheManager->invalidate($message, $stamps);
+        $invalidates = (new \ReflectionClass($message))->getAttributes(Invalidate::class);
+        if (empty($invalidates)) {
+            throw new \LogicException('CacheInvalidation message must have at least one Invalidate attribute.');
+        }
+        /** @var Invalidate[] $invalidates */
+        $invalidates = array_map(fn ($invalidate) => $invalidate->newInstance(), $invalidates);
 
-        return $this->decorated->dispatch($message, $stamps);
+        $invalidationResults = [];
+        foreach ($invalidates as $invalidate) {
+            if ($invalidate->useOwnerIdentifier && !$message instanceof OwnerIdentifier) {
+                throw new \LogicException('CacheInvalidation message must implement OwnerIdentifier interface when useOwnerIdentifier is set to true.');
+            }
+            if ($invalidate->invalidateBeforeDispatch) {
+                $invalidationResults[] = $this->cacheManager->invalidate(
+                    $invalidate->tags,
+                    $invalidate->groups ?? [],
+                    /* @phpstan-ignore-next-line @var OwnerIdentifier $message */
+                    $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
+                    $invalidate->useOwnerIdentifierForTags,
+                    $invalidate->adapter,
+                );
+            }
+        }
+
+        try {
+            /** @var Envelope */
+            $envelope = $this->decorated->dispatch($message, $stamps);
+        } catch (\Throwable $exception) {
+            throw $exception;
+        } finally {
+            foreach ($invalidates as $invalidate) {
+                if (!$invalidate->invalidateBeforeDispatch) {
+                    if ((isset($exception) && $invalidate->invalidateOnException) || !isset($exception)) {
+                        $invalidationResults[] = $this->cacheManager->invalidate(
+                            $invalidate->tags,
+                            $invalidate->groups ?? [],
+                            /* @phpstan-ignore-next-line @var OwnerIdentifier $message */
+                            $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
+                            $invalidate->useOwnerIdentifierForTags,
+                            $invalidate->adapter,
+                        );
+                    }
+                }
+            }
+
+            if (isset($envelope)) {
+                foreach ($invalidationResults as $result) {
+                    $envelope = $envelope->with(new InvalidationResultsStamp($result));
+                }
+            }
+        }
+
+        return $envelope;
     }
 }

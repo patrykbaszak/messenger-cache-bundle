@@ -8,6 +8,12 @@ services:
         exclude:
             - '../../{Resources,DependencyInjection,MessengerCacheBundle.php}'
 
+    messenger_cache.manager.runtime_cache_storage_decorator:
+        class: PBaszak\MessengerCacheBundle\Decorator\MessengerCacheManagerStorageDecorator
+
+    messenger_cache.manager.cacheable_callback_support_decorator:
+        class: PBaszak\MessengerCacheBundle\Decorator\MessengerCacheManagerChecksDecorator
+
     messenger_cache.manager:
         class: PBaszak\MessengerCacheBundle\Manager\MessengerCacheManager
 

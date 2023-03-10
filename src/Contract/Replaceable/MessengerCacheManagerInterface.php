@@ -21,4 +21,13 @@ interface MessengerCacheManagerInterface
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope;
 
     public function delete(string $cacheKey, ?string $adapter = null, ?Cache $cache = null, ?Cacheable $message = null): bool;
+
+    /**
+     * @param string[]    $tags
+     * @param string[]    $groups
+     * @param string|null $adapter if `null` the all available TagAware adapters will be invalidated
+     *
+     * @return array<string,array<string,bool>> The invalidated tags. ['adapter_alias' => ['tag' => true]]
+     */
+    public function invalidate(array $tags = [], array $groups = [], ?string $ownerIdentifier = null, bool $useOwnerIdentifierForTags = false, ?string $adapter = null): array;
 }

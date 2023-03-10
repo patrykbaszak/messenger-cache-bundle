@@ -14,6 +14,7 @@ use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
+use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
 use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Stamp\StampInterface;
@@ -21,6 +22,8 @@ use Throwable;
 
 class MessengerCacheManager implements MessengerCacheManagerInterface
 {
+    private const ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE = 'The %s adapter does not support tags. Use TagAwareAdapterInterface instead.';
+
     /**
      * @param array<string,AdapterInterface> $adapters
      */
@@ -85,10 +88,16 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
             }
 
             if ($cache->tags) {
+                if (!$adapter instanceof TagAwareAdapterInterface) {
+                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->adapter));
+                }
                 $item->tag($cache->tags);
             }
 
             if ($cache->group) {
+                if (!$adapter instanceof TagAwareAdapterInterface) {
+                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->adapter));
+                }
                 $item->tag(
                     $this->tagProvider->createGroupTag(
                         $cache->group,
@@ -98,6 +107,9 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
                     )
                 );
             } elseif ($message instanceof OwnerIdentifier) {
+                if (!$adapter instanceof TagAwareAdapterInterface) {
+                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->adapter));
+                }
                 $item->tag(
                     $this->tagProvider->createOwnerTag(
                         $message->getOwnerIdentifier()
@@ -130,5 +142,32 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         $pool = $this->adapters[$adapter ?? self::DEFAULT_ADAPTER_ALIAS];
 
         return $pool->deleteItem($cacheKey);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @throws \InvalidArgumentException When $tags is not valid
+     */
+    public function invalidate(array $tags = [], array $groups = [], ?string $ownerIdentifier = null, bool $useOwnerIdentifierForTags = false, ?string $adapter = null): array
+    {
+        if (empty($tags) && empty($groups) && empty($ownerIdentifier)) {
+            throw new \LogicException('At least one argument (tags, groups or ownerIdentifier) is required.');
+        }
+
+        if ($ownerIdentifier) {
+            $tags[] = $this->tagProvider->createOwnerTag($ownerIdentifier);
+        }
+
+        $result = [];
+        foreach ($this->adapters as $alias => $adapter) {
+            if ($adapter instanceof TagAwareAdapterInterface) {
+                foreach ($tags as $tag) {
+                    $result[$alias][$tag] = $adapter->invalidateTags([$tag]);
+                }
+            }
+        }
+
+        return $result;
     }
 }

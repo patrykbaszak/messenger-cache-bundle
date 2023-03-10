@@ -8,11 +8,9 @@ use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Contract\Optional\CacheableCallback;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
-use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Stamp\StampInterface;
 
-#[AsDecorator(MessengerCacheManagerInterface::class, 1)]
 class MessengerCacheManagerChecksDecorator implements MessengerCacheManagerInterface
 {
     public function __construct(
@@ -31,6 +29,14 @@ class MessengerCacheManagerChecksDecorator implements MessengerCacheManagerInter
     }
 
     public function delete(string $cacheKey, ?string $adapter = null, ?Cache $cache = null, ?Cacheable $message = null): bool
+    {
+        return $this->decorated->{__FUNCTION__}(...func_get_args());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function invalidate(array $tags = [], array $groups = [], ?string $ownerIdentifier = null, bool $useOwnerIdentifierForTags = false, ?string $adapter = null): array
     {
         return $this->decorated->{__FUNCTION__}(...func_get_args());
     }

@@ -19,5 +19,7 @@ class MessengerCacheExtension extends Extension
         $loader->load('services.yaml');
 
         $container->setParameter('messenger_cache.adapters', $config['adapters']);
+        $container->setParameter('messenger_cache.runtime_cache_storage', (bool) $config['runtime_cache_storage']);
+        $container->setParameter('messenger_cache.cacheable_callback_support', (bool) $config['cacheable_callback_support']);
     }
 }
