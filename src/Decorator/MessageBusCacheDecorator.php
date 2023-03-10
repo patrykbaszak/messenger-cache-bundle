@@ -10,7 +10,7 @@ use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheKeyProviderI
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Contract\Required\CacheInvalidation;
-use PBaszak\MessengerCacheBundle\Stamp\InvalidationResultsStamp;
+use PBaszak\MessengerCacheBundle\Stamps\InvalidationResultsStamp;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;

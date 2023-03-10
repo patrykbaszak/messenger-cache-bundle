@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PBaszak\MessengerCacheBundle\Stamp;
+namespace PBaszak\MessengerCacheBundle\Stamps;
 
 use Symfony\Component\Messenger\Stamp\StampInterface;
 
