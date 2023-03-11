@@ -53,12 +53,5 @@
         "test:unit": "@phpunit --group unit tests",
         "test:func": "@phpunit --group func tests",
         "test:integration": "@phpunit --group integration tests"
-    },
-    "extra": {
-        "symfony": {
-            "config": {
-                "default_path": "src/Resources/config"
-            }
-        }
     }
 }
