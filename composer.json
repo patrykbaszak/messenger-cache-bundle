@@ -57,7 +57,7 @@
     "extra": {
         "symfony": {
             "config": {
-                "messenger_cache.yaml": "config/packages/messenger_cache.yaml"
+                "default_path": "src/Resources/config"
             }
         }
     }
