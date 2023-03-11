@@ -23,7 +23,7 @@ class Configuration implements ConfigurationInterface
                     ->useAttributeAsKey('alias')
                     ->prototype('scalar')->end()
                     ->children()
-                        ->scalarNode('default')->defaultValue(AdapterInterface::class)->isRequired()->end()
+                        ->scalarNode('default')->defaultValue(AdapterInterface::class)->end()
                     ->end()
                 ->end()
                 ->booleanNode('runtime_cache_storage')->defaultFalse()->end()
