@@ -11,6 +11,7 @@ use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheOwnerTagProviderInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
+use PBaszak\MessengerCacheBundle\Message\RefreshAsync;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -18,12 +19,15 @@ use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
 use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\StampInterface;
 use Throwable;
 
 class MessengerCacheManager implements MessengerCacheManagerInterface
 {
     private const ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE = 'The %s adapter does not support tags. Use TagAwareAdapterInterface instead.';
+
+    private MessageBusInterface $messageBus;
 
     /**
      * @param array<string,AdapterInterface> $adapters
@@ -39,6 +43,11 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
                 new ArrayAdapter(storeSerialized: false)
             );
         }
+    }
+
+    public function setMessageBus(MessageBusInterface $messageBus): void
+    {
+        $this->messageBus = $messageBus;
     }
 
     /**
@@ -74,7 +83,14 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
             $created = $item->get()->created;
 
             if ((time() - $created) > $cache->refreshAfter) {
-                // todo: trigger async invalidation
+                $this->messageBus->dispatch(
+                    new RefreshAsync(
+                        $message,
+                        $stamps
+                    )
+                );
+
+                return new Envelope($message, $stamps);
             }
         }
 
@@ -92,6 +108,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
                 $item->expiresAfter($cache->ttl);
             }
 
+            /** @var OwnerIdentifier|DynamicTags $message */
             if ($message instanceof DynamicTags ? $message->getDynamicTags() : $cache->tags) {
                 if (!$adapter instanceof TagAwareAdapterInterface) {
                     throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->adapter));

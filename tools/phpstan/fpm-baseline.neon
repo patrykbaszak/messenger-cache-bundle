@@ -1,6 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Call to an undefined method PBaszak\\\\MessengerCacheBundle\\\\Contract\\\\Required\\\\Cacheable\\:\\:getOwnerIdentifier\\(\\)\\.$#"
+			message: "#^Result of && is always false\\.$#"
 			count: 1
-			path: ../../src/Manager/MessengerCacheManager.php
+			path: ../../src/Decorator/MessageBusCacheDecorator.php

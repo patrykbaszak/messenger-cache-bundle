@@ -47,6 +47,8 @@ class MessageBusCacheDecorator implements MessageBusInterface
      */
     private function dispatchCacheableMessage(Cacheable $message, array $stamps): Envelope
     {
+        $this->cacheManager->setMessageBus($this->decorated);
+
         return $this->cacheManager->get(
             $message,
             $stamps,
@@ -70,11 +72,11 @@ class MessageBusCacheDecorator implements MessageBusInterface
 
         $invalidationResults = [];
         foreach ($invalidates as $invalidate) {
+            /** @var OwnerIdentifier $message */
             if ($invalidate->useOwnerIdentifier && !$message instanceof OwnerIdentifier) {
                 throw new \LogicException('CacheInvalidation message must implement OwnerIdentifier interface when useOwnerIdentifier is set to true.');
             }
 
-            /* @var OwnerIdentifier $message */
             if ($invalidate->invalidateBeforeDispatch) {
                 if ($invalidate->invalidateAsync) {
                     $this->dispatch(

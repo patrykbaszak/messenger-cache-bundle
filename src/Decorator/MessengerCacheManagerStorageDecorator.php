@@ -24,6 +24,11 @@ class MessengerCacheManagerStorageDecorator implements MessengerCacheManagerInte
     ) {
     }
 
+    public function setMessageBus(object $messageBus): void
+    {
+        $this->decorated->{__FUNCTION__}(...func_get_args());
+    }
+
     /**
      * @param StampInterface[] $stamps
      */
