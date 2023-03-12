@@ -1,6 +1,6 @@
 # Messenger Cache Bundle #
 
-## Installation ##
+## Instalacja ##
 
 ```sh
 composer require pbaszak/messenger-cache-bundle
@@ -18,19 +18,19 @@ return [
 <hr>
 <hr>
 
-## Configuration ##
+## Konfiguracja ##
 
-Create or copy file `messenger_cache.yaml`:
+Utwórz lub skopiuj plik `messenger_cache.yaml`:
 ```sh
-# copy
+# kopiowanie
 cp vendor/pbaszak/messenger-cache-bundle/config/packages/messenger_cache.yaml config/packages/messenger_cache.yaml
 #
-# or
+# lub
 #
-# create
+# tworzenie
 touch config/packages/messenger_cache.yaml
 ```
-Recommended initial settings:
+Zalecane wstępne ustawienia:
 ```yaml
 # config/packages/messenger_cache.yaml
 messenger_cache:
@@ -41,13 +41,13 @@ messenger_cache:
 
     runtime_cache_storage: false
 ```
-Configuration description:
-| Parameter | Description |
-|----------|-------------|
-| `messenger_cache.adapters`  | List of adapters supported by `MessengerCacheBundle`, only `default` is mandatory and will be selected if no other adapter is specified in the `Cache` attribute. Using aliases is mandatory. Adapters must be services, so you may need to define them in the `services.yaml` file. Example below the table. |
-| `messenger_cache.runtime_cache_storage` | If set to `true`, a `Storage` decorator will be placed in front of the `MessengerCacheManager` to store the cache and return it faster than in the standard flow in case of a second request for the same cache. **WARNING: cache invalidation will remove all contents of `Storage`**. If you don't use double requests for the same cache within one request, it's better to set this parameter to `false`. |
+Opis konfiguracji:
+| Parametr | Opis |
+|----------|------|
+| `messenger_cache.adapters`  | Lista adapterów obsługiwanych przez `MessengerCacheBundle`, obowiązkowy jest tylko `default`, który to będzie wybrany, jeśli w atrybucie `Cache` nie wskażesz innego adaptera. Używanie aliasów jest obowiązkowe. Adaptery muszą być serwisami, tj. możliwe, że będziesz musiał je zdefiniować w pliku `services.yaml`, przykład poniżej tabelki. |
+| `messenger_cache.runtime_cache_storage` | Jeśli `true` to przed `MessengerCacheManager` zostanie umieszczony dekorator `Storage`, który przechowa cache i w przypadku drugiego odpytania o ten sam cache zwróci go szybciej niż w standardowym flow. **UWAGA: inwalidacja cache usuwa całą zawartość `Storage`**. Jeśli nie używasz podwójnego odpytania o ten sam cache w ramach jednego żądania to lepiej jest ustawić ten parametr na `false`. |
 
-Example declaration of adapters as services:
+Przykładowa deklaracja adapterów jako serwisów:
 ```yaml
 # config/services.yaml
 services:
@@ -71,22 +71,22 @@ services:
         arguments:
             - '@Predis\Client'
 ```
-**NOTE: Your code may (and probably will) look a bit different.**
+**UWAGA: W twoim kodzie może (a raczej na pewno będzie) to wyglądać trochę inaczej.**
 
-There are two more commands:
+Istnieją jeszcze dwie komendy:
  - `PBaszak\MessengerCacheBundle\Message\InvalidateAsync`,
  - `PBaszak\MessengerCacheBundle\Message\RefreshAsync`,
 
-You need to add them to asynchronous processing yourself. If you don't do this, they will be executed synchronously, which will affect the performance of your application when retrieving data from cache.
+musisz je dodać do obsługi asynchronicznej samodzielnie. Jeśli tego nie zrobisz, będą wykonywane synchronicznie, co wpłynie na wydajność Twojej aplikacji przy pobieraniu danych z cache.
 
 <hr>
 <hr>
 
-## Usage ##
+## Użycie ##
 
-### **Example no 1 (Cache)** ###
+### **Przykład nr 1 (Cache)** ###
 
-An example class handled by Symfony Messenger as a Message, which has its own Handler that always returns a random string.
+Przykładowa klasa obsługiwana przez `Symfony Messenger` jako `Message`, posiada swój `Handler`, który za każdym razem zwraca losowy ciąg znaków.
 
 ```php
 # src/Application/Query/GetRandomString.php
@@ -99,7 +99,7 @@ class GetRandomString implements Cacheable
 }
 ```
 
-Any Manager that invokes the Message we are interested in and returns its response:
+Dowolny Manager, który wywołuje interesujący nas `Message` i zwraca jego odpowiedź:
 
 ```php
 # src/Domain/Manager/StringsManager.php
@@ -131,7 +131,7 @@ $result1 = $stringsManager->getAlwaysSameRandomString();
 var_dump($result0 === $result1); // true
 ```
 
-### **Example no 2 (CacheInvalidation)** ###
+### **Przykład nr 2 (CacheInvalidation)** ###
 
 ```php
 # src/Application/Query/GetRandomString.php
@@ -263,41 +263,41 @@ var_dump($result0 === $result1); // false
 <hr>
 <hr>
 
-## Detailed settings ##
+## Ustawienia szczegółowe ##
 
-### **Attributes** ###
+### **Atrybuty** ###
 
 ### Cache ###
 
-| Parameter | Description |
+| Parametr | Opis |
 |:---------|:-----|
-| `$ttl` | The cache lifetime in seconds. You may also be interested in the `DynamicTtl` interface, which allows you to dynamically choose the `ttl` for the cache. |
-| `$refreshAfter` | The cache validity period in seconds. After this time has elapsed, when the `Bundle` is called again, it will try to refresh this cache. **NOTE: You need to add `PBaszak\MessengerCacheBundle\Message\RefreshAsync` to your `MessageBusInterface`-based queue system (AMQP, Redis, Doctrine - see packages: `Symfony/amqp-messenger`, `Symfony/redis-messenger`, `Symfony/doctrine-messenger`)**. |
-| `$adapter` | The adapter alias that will be used to handle the cache. |
-| `$group` | This is a tag that is used strictly to bind multiple caches into one group (it works closely with the `OwnerIdentifier` interface, which allows you to specify the ownership of the cache group). |
-| `$tags` | A list of constant tags for a given resource, but you may be interested in the `DynamicTags` interface, which allows you to fully customize it. |
-| `$useOwnerIdentifierForTags` | If `true`, the tags will have a prefix assigned with the value returned by the `getOwnerIdentifier` method of the `OwnerIdentifier` interface. The tag will look like this: `_{ownerIdentifier}_{tag}`. |
+| `$ttl` | Czas życia cache w sekundach. Możesz też się zainteresować interfejsem `DynamicTtl`, który pozwoli Ci dynamicznie wybrać `ttl` dla cache. |
+| `$refreshAfter` | Czas ważności cache w sekundach, po upłynięciu tego czasu, po kolejnym wywołaniu `Bundle` spróbuje odświeżyć ten cache. **UWAGA: Konieczne jest dodanie `PBaszak\MessengerCacheBundle\Message\RefreshAsync` do Twojego systemu kolejek opartego o `MessageBusInterface` (AMQP, Redis, Doctrine - zobacz paczki: `Symfony/amqp-messenger`, `Symfony/redis-messenger`, `Symfony/doctrine-messenger`)**. |
+| `$adapter` | Alias adapteru, który zostanie użyty do obsługi cache. |
+| `$group` | Jest to tag, który jest używany ściśle do wiązania wielu cache w jedną grupę (ściśle współpracuje z interfejsem `OwnerIdentifier`, co pozwala sprecyzować przynależność cache do grupy, której właścicielem jest wskazany `owner`.) |
+| `$tags` | Lista stałych tagów dla danego zasobu, ale może będziesz zainteresowany interfejsem `DynamicTags`, który pozwoli Ci na pełną customizację. |
+| `$useOwnerIdentifierForTags` | Wartość `true` sprawi, że tagi będą posiadały przypisany prefix z wartością zwracaną przez metodę `getOwnerIdentifier` interfejsu `OwnerIdentifier`. Tag będzie wyglądać tak: `_{ownerIdentifier}_{tag}`. |
 
 ### Invalidate ###
 
-| Parameter | Description |
+| Parametr | Opis |
 |:---------|:-----|
-| `$tags` | A list of constant tags that should be invalidated. You can replace them with the `DynamicTags` interface |
-| `$useOwnerIdentifierForTags` | By default `false`. If set to `true`, the tags in `$tags` will have a prefix returned by the `getOwnerIdentifier` method of the `OwnerIdentifier` interface |
-| `$groups` | A list of groups (tags) that should be invalidated. |
-| `$useOwnerIdentifier` | By default `true`. Works similarly to `$useOwnerIdentifierForTags`, but for `$groups`. |
-| `$adapter` | An adapter to invalidate. If `null`, all `TagAwareAdapterInterface` adapters will be invalidated. |
-| `$invalidateBeforeDispatch` | If you need to, cache invalidation can be performed before executing the actual `Message`. |
-| `$invalidateOnException` | If handling the `Message` results in an exception, cache invalidation can still be performed after executing the `Message` if you want. |
-| `$invalidateAsync` | If `true` and `PBaszak\MessengerCacheBundle\Message\InvalidateAsync` is present in your queue system (`Symfony/amqp-messenger`, `Symfony/redis-messenger`, `Symfony/doctrine-messenger`) as an asynchronously executed message, cache invalidation will be performed asynchronously. |
+| `$tags` | Lista stałych tagów, które mają zostać poddane inwalidacji. Możesz je zastąpić przez interfejs `DynamicTags` |
+| `$useOwnerIdentifierForTags` | Domyślnie `false`. Wartość `true` sprawi, że tagi `$tags` będą posiadały prefix zwrócony przez metodę `getOwnerIdentifier` interfejsu `OwnerIdentifier` |
+| `$groups` | Lista grup (tagów), które mają zostać poddane inwalidacji. |
+| `$useOwnerIdentifier` | Domyślnie `true`. Działa analogicznie jak `$useOwnerIdentifierForTags`, tylko, że wobec `$groups`. |
+| `$adapter` | Adapter, który ma zostać poddany inwalidacji, jeśli `null`, to wszystkie adaptery `TagAwareAdapterInterface` będą poddane inwalidacji. |
+| `$invalidateBeforeDispatch` | Jeśli potrzebujesz, inwalidacja cache może odbyć się przed wykonaniem właściwego `Message`. |
+| `$invalidateOnException` | Jeśli obsługa `Message` zakończy się wystąpieniem wyjątku, to inwalidacja po wykonaniu `Message` nadal może zostać wykonana, jeśli tylko chcesz. |
+| `$invalidateAsync` | Jeśli `true` oraz `PBaszak\MessengerCacheBundle\Message\InvalidateAsync` znajduje się w Twoim systemie kolejek (`Symfony/amqp-messenger`, `Symfony/redis-messenger`, `Symfony/doctrine-messenger`) jako wykonywane asynchronicznie, to inwalidacja cache odbędzie się asynchronicznie. |
 
-### **Optional Interfaces** ###
+### **Opcjonalne interfejsy** ###
 
-| Interface | Description |
+| Interfejs | Opis |
 |:----------|:-----|
-| `CacheableCallback` | The `isCacheable(): bool` method allows you to dynamically decide whether or not to use the cache. |
-| `DynamicTags` | The `getDynamicTags(): array` method allows you to dynamically provide tags for cache handling (replaces the `Cache(tags: [])` property). |
-| `DynamicTtl` | The `getDynamicTtl(): int` method allows you to dynamically provide a `ttl` value in seconds for the cache. |
-| `HashableInstance` | The `getHashableInstance(): Cacheable` method should return the `Message` object in a form that can be hashed. You may need to use this interface if the cache you want to store should be available to multiple users and at the same time you have user context in the `Message`. This method allows you to get rid of it. |
-| `OwnerIdentifier` | The `getOwnerIdentifier(): string` method allows you to assign the cache to any owner described by a `string` returned by this method. |
-| `UniqueHash` | The `getUniqueHash(): string` method allows you to define the hash for the `Message` instance yourself. You can use this instead of `HashableInstance`. |
+| `CacheableCallback` | Metoda `isCacheable(): bool` pozwoli Ci dynamicznie zdecydować o użyciu bądź nie cache. |
+| `DynamicTags` | Metoda `getDynamicTags(): array` pozwoli Ci dynamicznie dostarczyć tagi do obsługi cache (zastępuje właściwość `Cache(tags: [])`). |
+| `DynamicTtl` | Metoda `getDynamicTtl(): int` pozwoli Ci dynamicznie dostarczyć wartość `ttl` w sekundach dla cache. |
+| `HashableInstance` | Metoda `getHashableInstance(): Cacheable` powinna zwrócić obiekt `Message` w formie, którą można poddać hashowaniu. Możesz musieć użyć tego interfejsu, jeśli cache, który chcesz przechować powinien być dostępny dla wielu użytkowników i jednocześnie w `Message` posiadasz kontekst użytkownika. Dzięki tej metodzi pozbędziesz się go. |
+| `OwnerIdentifier` | Metoda `getOwnerIdentifier(): string` pozwoli Ci przypisać cache do dowolnego właściciela opisanego przez `string`, który ów metoda zwraca. |
+| `UniqueHash` | Metoda `getUniqueHash(): string` pozwala Ci samodzielnie zdefiniować hash dla instancji `Message`. Możesz tego użyć zamiast `HashableInstance`. |

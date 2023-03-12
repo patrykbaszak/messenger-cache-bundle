@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Attribute;
 
-use Attribute;
-
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
 class Invalidate
 {
@@ -23,7 +21,7 @@ class Invalidate
      */
     public function __construct(
         public readonly array $tags = [],
-        public readonly bool $useOwnerIdentifierForTags = true,
+        public readonly bool $useOwnerIdentifierForTags = false,
         public readonly ?array $groups = null,
         public readonly bool $useOwnerIdentifier = true,
         public readonly ?string $adapter = null,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\Decorator;
 
 use PBaszak\MessengerCacheBundle\Attribute\Invalidate;
+use PBaszak\MessengerCacheBundle\Contract\Optional\CacheableCallback;
 use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags;
 use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheKeyProviderInterface;
@@ -47,6 +48,10 @@ class MessageBusCacheDecorator implements MessageBusInterface
      */
     private function dispatchCacheableMessage(Cacheable $message, array $stamps): Envelope
     {
+        if ($message instanceof CacheableCallback && !$message->isCacheable()) {
+            return $this->decorated->dispatch($message, $stamps);
+        }
+
         $this->cacheManager->setMessageBus($this->decorated);
 
         return $this->cacheManager->get(

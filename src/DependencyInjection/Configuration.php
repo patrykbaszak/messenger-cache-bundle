@@ -27,7 +27,6 @@ class Configuration implements ConfigurationInterface
                     ->end()
                 ->end()
                 ->booleanNode('runtime_cache_storage')->defaultFalse()->end()
-                ->booleanNode('cacheable_callback_support')->defaultTrue()->end()
             ->end()
         ->end();
 

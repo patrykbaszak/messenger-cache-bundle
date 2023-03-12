@@ -21,12 +21,6 @@ class MessengerCacheManagerPass implements CompilerPassInterface
             $runtimeCacheStorageDecorator->setArgument('$decorated', $manager);
         }
 
-        if ($container->getParameter('messenger_cache.cacheable_callback_support')) {
-            $cacheableCallbackSupportDecorator = $container->getDefinition('messenger_cache.manager.cacheable_callback_support_decorator');
-            $cacheableCallbackSupportDecorator->setDecoratedService('messenger_cache.manager');
-            $cacheableCallbackSupportDecorator->setArgument('$decorated', $manager);
-        }
-
         $adapterDefinitions = [];
         foreach ($adapters as $alias => $adapter) {
             $adapterDefinitions[$alias] = $container->findDefinition($adapter);
