@@ -26,4 +26,5 @@
 ###> pbaszak/messenger-cache ###
 /.vscode/
 /node_modules/
+.phpunit.cache
 ###< pbaszak/messenger-cache ###

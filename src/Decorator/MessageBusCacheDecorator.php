@@ -11,6 +11,7 @@ use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheKeyProviderI
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Contract\Required\CacheInvalidation;
+use PBaszak\MessengerCacheBundle\Message\InvalidateAsync;
 use PBaszak\MessengerCacheBundle\Stamps\InvalidationResultsStamp;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
@@ -65,23 +66,35 @@ class MessageBusCacheDecorator implements MessageBusInterface
         if (empty($invalidates)) {
             throw new \LogicException('CacheInvalidation message must have at least one Invalidate attribute.');
         }
-        /** @var Invalidate[] $invalidates */
-        $invalidates = array_map(fn ($invalidate) => $invalidate->newInstance(), $invalidates);
+        $invalidates = array_map(fn ($invalidate): Invalidate => $invalidate->newInstance(), $invalidates);
 
         $invalidationResults = [];
         foreach ($invalidates as $invalidate) {
             if ($invalidate->useOwnerIdentifier && !$message instanceof OwnerIdentifier) {
                 throw new \LogicException('CacheInvalidation message must implement OwnerIdentifier interface when useOwnerIdentifier is set to true.');
             }
+
+            /* @var OwnerIdentifier $message */
             if ($invalidate->invalidateBeforeDispatch) {
-                $invalidationResults[] = $this->cacheManager->invalidate(
-                    $message instanceof DynamicTags ? $message->getDynamicTags() : $invalidate->tags,
-                    $invalidate->groups ?? [],
-                    /* @phpstan-ignore-next-line @var OwnerIdentifier $message */
-                    $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
-                    $invalidate->useOwnerIdentifierForTags,
-                    $invalidate->adapter,
-                );
+                if ($invalidate->invalidateAsync) {
+                    $this->dispatch(
+                        new InvalidateAsync(
+                            $message instanceof DynamicTags ? $message->getDynamicTags() : $invalidate->tags,
+                            $invalidate->groups ?? [],
+                            $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
+                            $invalidate->useOwnerIdentifierForTags,
+                            $invalidate->adapter,
+                        )
+                    );
+                } else {
+                    $invalidationResults[] = $this->cacheManager->invalidate(
+                        $message instanceof DynamicTags ? $message->getDynamicTags() : $invalidate->tags,
+                        $invalidate->groups ?? [],
+                        $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
+                        $invalidate->useOwnerIdentifierForTags,
+                        $invalidate->adapter,
+                    );
+                }
             }
         }
 
@@ -93,15 +106,26 @@ class MessageBusCacheDecorator implements MessageBusInterface
         } finally {
             foreach ($invalidates as $invalidate) {
                 if (!$invalidate->invalidateBeforeDispatch) {
-                    if ((isset($exception) && $invalidate->invalidateOnException) || !isset($exception)) {
-                        $invalidationResults[] = $this->cacheManager->invalidate(
-                            $message instanceof DynamicTags ? $message->getDynamicTags() : $invalidate->tags,
-                            $invalidate->groups ?? [],
-                            /* @phpstan-ignore-next-line @var OwnerIdentifier $message */
-                            $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
-                            $invalidate->useOwnerIdentifierForTags,
-                            $invalidate->adapter,
+                    if ($invalidate->invalidateAsync) {
+                        $this->dispatch(
+                            new InvalidateAsync(
+                                $message instanceof DynamicTags ? $message->getDynamicTags() : $invalidate->tags,
+                                $invalidate->groups ?? [],
+                                $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
+                                $invalidate->useOwnerIdentifierForTags,
+                                $invalidate->adapter,
+                            )
                         );
+                    } else {
+                        if ((isset($exception) && $invalidate->invalidateOnException) || !isset($exception)) {
+                            $invalidationResults[] = $this->cacheManager->invalidate(
+                                $message instanceof DynamicTags ? $message->getDynamicTags() : $invalidate->tags,
+                                $invalidate->groups ?? [],
+                                $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
+                                $invalidate->useOwnerIdentifierForTags,
+                                $invalidate->adapter,
+                            );
+                        }
                     }
                 }
             }

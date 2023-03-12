@@ -19,6 +19,7 @@ class Invalidate
      * @param string|null $adapter                   if `null` all TagAwareAdapters are used
      * @param bool        $invalidateBeforeDispatch  if `true` then cache is invalidated before dispatching message
      * @param bool        $invalidateOnException     if `true` then cache is invalidated even when exception is thrown
+     * @param bool        $invalidateAsync           if `true` then cache is invalidated asynchronously
      */
     public function __construct(
         public readonly array $tags = [],
@@ -28,6 +29,7 @@ class Invalidate
         public readonly ?string $adapter = null,
         public readonly bool $invalidateBeforeDispatch = false,
         public readonly bool $invalidateOnException = false,
+        public readonly bool $invalidateAsync = false,
     ) {
     }
 }
