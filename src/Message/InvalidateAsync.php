@@ -11,14 +11,14 @@ class InvalidateAsync
      * @param string[]    $groups                    Define group of messages which You want to invalidate. Works with `ownerIdentifier`.
      * @param string|null $ownerIdentifier           if `null` then `getOwnerIdentifier()` method is required
      * @param bool        $useOwnerIdentifierForTags if `true` then `getOwnerIdentifier()` method is required and all tags will be prefixed with owner identifier
-     * @param string|null $adapter                   if `null` all TagAwareAdapters are used
+     * @param string|null $pool                      if `null` all TagAwareAdapters are used
      */
     public function __construct(
         public readonly array $tags = [],
         public readonly array $groups = [],
         public readonly ?string $ownerIdentifier = null,
         public readonly bool $useOwnerIdentifierForTags = false,
-        public readonly ?string $adapter = null
+        public readonly ?string $pool = null
     ) {
     }
 }

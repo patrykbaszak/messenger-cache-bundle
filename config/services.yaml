@@ -18,21 +18,3 @@ services:
         resource: '../tests/Helper/*'
         exclude:
             - 'Kernel.php'
-
-    Symfony\Component\Cache\Adapter\ArrayAdapter:
-        arguments:
-            $storeSerialized: false
-    Symfony\Component\Cache\Adapter\AdapterInterface:
-        alias: Symfony\Component\Cache\Adapter\ArrayAdapter
-    Symfony\Component\Cache\Adapter\PhpArrayAdapter:
-        arguments:
-            - '%kernel.cache_dir%/messenger_cache.php'
-            - '@Symfony\Component\Cache\Adapter\AdapterInterface'
-    Predis\Client:
-        arguments:
-            - scheme: redis
-              host: redis
-              port: 6379
-    Symfony\Component\Cache\Adapter\RedisTagAwareAdapter:
-        arguments:
-            - '@Predis\Client'

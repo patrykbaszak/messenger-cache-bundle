@@ -10,7 +10,7 @@ use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetString;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
 
-#[Cache(adapter: 'redis')]
+#[Cache(pool: 'redis')]
 class GetCachedString extends GetString implements Cacheable
 {
 }

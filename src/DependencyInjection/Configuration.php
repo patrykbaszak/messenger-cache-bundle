@@ -17,7 +17,7 @@ class Configuration implements ConfigurationInterface
 
         $treeBuilder->getRootNode()
             ->children()
-                ->arrayNode('adapters')
+                ->arrayNode('pools')
                     ->isRequired()
                     ->requiresAtLeastOneElement()
                     ->useAttributeAsKey('alias')
@@ -26,7 +26,6 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode('default')->defaultValue(AdapterInterface::class)->end()
                     ->end()
                 ->end()
-                ->booleanNode('runtime_cache_storage')->defaultFalse()->end()
             ->end()
         ->end();
 

@@ -1,9 +1,5 @@
 messenger_cache:
-    adapters:
-        redis: 'Symfony\Component\Cache\Adapter\RedisTagAwareAdapter' # You should use TagAware adapters.
-        default: 'Symfony\Component\Cache\Adapter\PhpArrayAdapter'
-        runtime: 'Symfony\Component\Cache\Adapter\ArrayAdapter'
-
-    # This two boolean parameters are add decorators for cache manager.
-    runtime_cache_storage: false # cache invalidation is not ready here, if You want to use invalidation type `false`
-    
+    pools:
+        default: filesystem
+        runtime: runtime
+        redis: redis

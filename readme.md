@@ -34,42 +34,31 @@ Recommended initial settings:
 ```yaml
 # config/packages/messenger_cache.yaml
 messenger_cache:
-    adapters:
-        file: 'Symfony\Component\Cache\Adapter\PhpArrayAdapter'
-        runtime: 'Symfony\Component\Cache\Adapter\ArrayAdapter'
-        default: 'Symfony\Component\Cache\Adapter\RedisTagAwareAdapter'
-
-    runtime_cache_storage: false
+    pools:
+        default: filesystem
+        runtime: runtime
+        redis: redis
 ```
 Configuration description:
 | Parameter | Description |
 |----------|-------------|
-| `messenger_cache.adapters`  | List of adapters supported by `MessengerCacheBundle`, only `default` is mandatory and will be selected if no other adapter is specified in the `Cache` attribute. Using aliases is mandatory. Adapters must be services, so you may need to define them in the `services.yaml` file. Example below the table. |
-| `messenger_cache.runtime_cache_storage` | If set to `true`, a `Storage` decorator will be placed in front of the `MessengerCacheManager` to store the cache and return it faster than in the standard flow in case of a second request for the same cache. **WARNING: cache invalidation will remove all contents of `Storage`**. If you don't use double requests for the same cache within one request, it's better to set this parameter to `false`. |
+| `messenger_cache.pools`  | List of pools supported by `MessengerCacheBundle`, only `default` is mandatory and will be selected if no other pool is specified in the `Cache` attribute. Using aliases is mandatory. Adapters must be services, so you may need to define them in the `services.yaml` file. Example below the table. |
 
-Example declaration of adapters as services:
+Example declaration of pools as services:
 ```yaml
-# config/services.yaml
-services:
-    Symfony\Component\Cache\Adapter\ArrayAdapter:
-        arguments:
-            $storeSerialized: false
-    Symfony\Component\Cache\Adapter\AdapterInterface:
-        alias: Symfony\Component\Cache\Adapter\ArrayAdapter
-    Symfony\Component\Cache\Adapter\PhpArrayAdapter:
-        arguments:
-            - '%kernel.cache_dir%/messenger_cache.php'
-            - '@Symfony\Component\Cache\Adapter\AdapterInterface'
-    Predis\Client:
-        arguments:
-            - scheme: redis
-              host: redis
-              port: 6379
-            - parameters:
-                password: secret
-    Symfony\Component\Cache\Adapter\RedisTagAwareAdapter:
-        arguments:
-            - '@Predis\Client'
+# config/cache.yaml
+framework:
+    cache:
+        default_redis_provider: 'redis://redis:6379'
+        pools:
+            runtime: 
+                adapter: cache.adapter.array
+            filesystem: 
+                adapter: cache.adapter.filesystem
+            redis:
+                adapter: cache.adapter.redis_tag_aware
+                tags: true
+
 ```
 **NOTE: Your code may (and probably will) look a bit different.**
 
@@ -273,7 +262,7 @@ var_dump($result0 === $result1); // false
 |:---------|:-----|
 | `$ttl` | The cache lifetime in seconds. You may also be interested in the `DynamicTtl` interface, which allows you to dynamically choose the `ttl` for the cache. |
 | `$refreshAfter` | The cache validity period in seconds. After this time has elapsed, when the `Bundle` is called again, it will try to refresh this cache. **NOTE: You need to add `PBaszak\MessengerCacheBundle\Message\RefreshAsync` to your `MessageBusInterface`-based queue system (AMQP, Redis, Doctrine - see packages: `Symfony/amqp-messenger`, `Symfony/redis-messenger`, `Symfony/doctrine-messenger`)**. |
-| `$adapter` | The adapter alias that will be used to handle the cache. |
+| `$pool` | The pool alias that will be used to handle the cache. |
 | `$group` | This is a tag that is used strictly to bind multiple caches into one group (it works closely with the `OwnerIdentifier` interface, which allows you to specify the ownership of the cache group). |
 | `$tags` | A list of constant tags for a given resource, but you may be interested in the `DynamicTags` interface, which allows you to fully customize it. |
 | `$useOwnerIdentifierForTags` | If `true`, the tags will have a prefix assigned with the value returned by the `getOwnerIdentifier` method of the `OwnerIdentifier` interface. The tag will look like this: `_{ownerIdentifier}_{tag}`. |
@@ -286,7 +275,7 @@ var_dump($result0 === $result1); // false
 | `$useOwnerIdentifierForTags` | By default `false`. If set to `true`, the tags in `$tags` will have a prefix returned by the `getOwnerIdentifier` method of the `OwnerIdentifier` interface |
 | `$groups` | A list of groups (tags) that should be invalidated. |
 | `$useOwnerIdentifier` | By default `true`. Works similarly to `$useOwnerIdentifierForTags`, but for `$groups`. |
-| `$adapter` | An adapter to invalidate. If `null`, all `TagAwareAdapterInterface` adapters will be invalidated. |
+| `$pool` | An pool to invalidate. If `null`, all `TagAwareAdapterInterface` pools will be invalidated. |
 | `$invalidateBeforeDispatch` | If you need to, cache invalidation can be performed before executing the actual `Message`. |
 | `$invalidateOnException` | If handling the `Message` results in an exception, cache invalidation can still be performed after executing the `Message` if you want. |
 | `$invalidateAsync` | If `true` and `PBaszak\MessengerCacheBundle\Message\InvalidateAsync` is present in your queue system (`Symfony/amqp-messenger`, `Symfony/redis-messenger`, `Symfony/doctrine-messenger`) as an asynchronously executed message, cache invalidation will be performed asynchronously. |

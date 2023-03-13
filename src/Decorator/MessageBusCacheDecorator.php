@@ -90,7 +90,7 @@ class MessageBusCacheDecorator implements MessageBusInterface
                             $invalidate->groups ?? [],
                             $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
                             $invalidate->useOwnerIdentifierForTags,
-                            $invalidate->adapter,
+                            $invalidate->pool,
                         )
                     );
                 } else {
@@ -99,7 +99,7 @@ class MessageBusCacheDecorator implements MessageBusInterface
                         $invalidate->groups ?? [],
                         $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
                         $invalidate->useOwnerIdentifierForTags,
-                        $invalidate->adapter,
+                        $invalidate->pool,
                     );
                 }
             }
@@ -120,7 +120,7 @@ class MessageBusCacheDecorator implements MessageBusInterface
                                 $invalidate->groups ?? [],
                                 $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
                                 $invalidate->useOwnerIdentifierForTags,
-                                $invalidate->adapter,
+                                $invalidate->pool,
                             )
                         );
                     } else {
@@ -130,7 +130,7 @@ class MessageBusCacheDecorator implements MessageBusInterface
                                 $invalidate->groups ?? [],
                                 $invalidate->useOwnerIdentifier ? $message->getOwnerIdentifier() : null,
                                 $invalidate->useOwnerIdentifierForTags,
-                                $invalidate->adapter,
+                                $invalidate->pool,
                             );
                         }
                     }

@@ -11,7 +11,7 @@ use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetNumber;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
 
-#[Cache(adapter: 'redis')]
+#[Cache(pool: 'redis')]
 class GetCachedNumber extends GetNumber implements Cacheable, OwnerIdentifier
 {
     public function getOwnerIdentifier(): string
@@ -35,6 +35,7 @@ class GetCachedNumberTest extends KernelTestCase
     {
         $result = $this->handle(new GetCachedNumber());
         $result2 = $this->handle(new GetCachedNumber());
+        $result3 = $this->handle(new GetCachedNumber());
 
         self::assertEquals($result, $result2);
     }

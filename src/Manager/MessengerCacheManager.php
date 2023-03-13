@@ -25,20 +25,20 @@ use Throwable;
 
 class MessengerCacheManager implements MessengerCacheManagerInterface
 {
-    private const ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE = 'The %s adapter does not support tags. Use TagAwareAdapterInterface instead.';
+    private const ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE = 'The %s pool does not support tags. Use TagAwareAdapterInterface instead.';
 
     private MessageBusInterface $messageBus;
 
     /**
-     * @param array<string,AdapterInterface> $adapters
+     * @param array<string,AdapterInterface> $pools
      */
     public function __construct(
         private MessengerCacheOwnerTagProviderInterface $tagProvider,
-        private array $adapters = [],
+        private array $pools = [],
         string $kernelCacheDir = '',
     ) {
-        if (empty($this->adapters)) {
-            $this->adapters[self::DEFAULT_ADAPTER_ALIAS] = new PhpArrayAdapter(
+        if (empty($this->pools)) {
+            $this->pools[self::DEFAULT_ADAPTER_ALIAS] = new PhpArrayAdapter(
                 $kernelCacheDir.self::DEFAULT_CACHE_FILE,
                 new ArrayAdapter(storeSerialized: false)
             );
@@ -61,12 +61,12 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
             throw new \LogicException(sprintf('The %s class has not declared the %s attribute which is required.', get_class($message), Cache::class));
         }
 
-        if ($cache->adapter && !in_array($cache->adapter, array_keys($this->adapters), true)) {
-            throw new \LogicException(sprintf('The %s adapter is not configured.', $cache->adapter));
+        if ($cache->pool && !in_array($cache->pool, array_keys($this->pools), true)) {
+            throw new \LogicException(sprintf('The %s pool is not configured.', $cache->pool));
         }
 
         /** @var AdapterInterface */
-        $adapter = $this->adapters[$cache->adapter ?? self::DEFAULT_ADAPTER_ALIAS];
+        $pool = $this->pools[$cache->pool ?? self::DEFAULT_ADAPTER_ALIAS];
 
         $forceCacheRefresh = false;
         foreach ($stamps as $stamp) {
@@ -77,7 +77,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         }
 
         /** @var CacheItem $item */
-        $item = $adapter->getItem($cacheKey);
+        $item = $pool->getItem($cacheKey);
 
         if ($cache->refreshAfter && $item->isHit() && !$forceCacheRefresh) {
             $created = $item->get()->created;
@@ -110,8 +110,8 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
 
             /** @var OwnerIdentifier|DynamicTags $message */
             if ($message instanceof DynamicTags ? $message->getDynamicTags() : $cache->tags) {
-                if (!$adapter instanceof TagAwareAdapterInterface) {
-                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->adapter));
+                if (!$pool instanceof TagAwareAdapterInterface) {
+                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->pool));
                 }
                 $item->tag(
                     $message instanceof DynamicTags ?
@@ -123,8 +123,8 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
             }
 
             if ($cache->group) {
-                if (!$adapter instanceof TagAwareAdapterInterface) {
-                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->adapter));
+                if (!$pool instanceof TagAwareAdapterInterface) {
+                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->pool));
                 }
                 $item->tag(
                     $this->tagProvider->createGroupTag(
@@ -135,8 +135,8 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
                     )
                 );
             } elseif ($message instanceof OwnerIdentifier) {
-                if (!$adapter instanceof TagAwareAdapterInterface) {
-                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->adapter));
+                if (!$pool instanceof TagAwareAdapterInterface) {
+                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->pool));
                 }
                 $item->tag(
                     $this->tagProvider->createOwnerTag(
@@ -145,29 +145,29 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
                 );
             }
 
-            $adapter->save($item);
+            $pool->save($item);
         }
 
         return $item->get()->value;
     }
 
-    public function delete(string $cacheKey, ?string $adapter = null, ?Cache $cache = null, ?Cacheable $message = null): bool
+    public function delete(string $cacheKey, ?string $pool = null, ?Cache $cache = null, ?Cacheable $message = null): bool
     {
-        if (empty(array_filter([$adapter, $cache, $message]))) {
+        if (empty(array_filter([$pool, $cache, $message]))) {
             throw new \LogicException('At least one argument is required in addition to cacheKey.');
         }
 
-        if ($message && !$cache && !$adapter) {
+        if ($message && !$cache && !$pool) {
             $cache = (new \ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
-            $adapter = $cache->adapter;
+            $pool = $cache->pool;
         }
 
-        if ($cache && !$adapter) {
-            $adapter = $cache->adapter;
+        if ($cache && !$pool) {
+            $pool = $cache->pool;
         }
 
         /** @var AdapterInterface */
-        $pool = $this->adapters[$adapter ?? self::DEFAULT_ADAPTER_ALIAS];
+        $pool = $this->pools[$pool ?? self::DEFAULT_ADAPTER_ALIAS];
 
         return $pool->deleteItem($cacheKey);
     }
@@ -177,7 +177,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
      *
      * @throws \InvalidArgumentException When $tags is not valid
      */
-    public function invalidate(array $tags = [], array $groups = [], ?string $ownerIdentifier = null, bool $useOwnerIdentifierForTags = false, ?string $adapter = null): array
+    public function invalidate(array $tags = [], array $groups = [], ?string $ownerIdentifier = null, bool $useOwnerIdentifierForTags = false, ?string $pool = null): array
     {
         if (empty($tags) && empty($groups) && empty($ownerIdentifier)) {
             throw new \LogicException('At least one argument (tags, groups or ownerIdentifier) is required.');
@@ -203,10 +203,10 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         }
 
         $result = [];
-        foreach ($this->adapters as $alias => $adapter) {
-            if ($adapter instanceof TagAwareAdapterInterface) {
+        foreach ($this->pools as $alias => $pool) {
+            if ($pool instanceof TagAwareAdapterInterface) {
                 foreach ($_tags as $_tag) {
-                    $result[$alias][$_tag] = $adapter->invalidateTags([$_tag]);
+                    $result[$alias][$_tag] = $pool->invalidateTags([$_tag]);
                 }
             }
         }

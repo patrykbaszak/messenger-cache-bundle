@@ -1,0 +1,11 @@
+framework:
+    cache:
+        default_redis_provider: 'redis://redis:6379'
+        pools:
+            runtime: 
+                adapter: cache.adapter.array
+            filesystem: 
+                adapter: cache.adapter.filesystem
+            redis:
+                adapter: cache.adapter.redis_tag_aware
+                tags: true

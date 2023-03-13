@@ -23,7 +23,7 @@ class InvalidateAsyncHandler
             $message->groups,
             $message->ownerIdentifier,
             $message->useOwnerIdentifierForTags,
-            $message->adapter
+            $message->pool
         );
     }
 }

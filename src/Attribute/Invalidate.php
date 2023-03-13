@@ -14,7 +14,7 @@ class Invalidate
      * @param string[]    $groups                    define group of messages which You want to invalidate
      * @param bool        $useOwnerIdentifier        if `true` then `getOwnerIdentifier()` method is required and group
      *                                               will be prefixed with owner
-     * @param string|null $adapter                   if `null` all TagAwareAdapters are used
+     * @param string|null $pool                      if `null` all TagAwareAdapters are used
      * @param bool        $invalidateBeforeDispatch  if `true` then cache is invalidated before dispatching message
      * @param bool        $invalidateOnException     if `true` then cache is invalidated even when exception is thrown
      * @param bool        $invalidateAsync           if `true` then cache is invalidated asynchronously
@@ -24,7 +24,7 @@ class Invalidate
         public readonly bool $useOwnerIdentifierForTags = false,
         public readonly ?array $groups = null,
         public readonly bool $useOwnerIdentifier = true,
-        public readonly ?string $adapter = null,
+        public readonly ?string $pool = null,
         public readonly bool $invalidateBeforeDispatch = false,
         public readonly bool $invalidateOnException = false,
         public readonly bool $invalidateAsync = false,

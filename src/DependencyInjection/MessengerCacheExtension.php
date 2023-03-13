@@ -18,7 +18,6 @@ class MessengerCacheExtension extends Extension
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yaml');
 
-        $container->setParameter('messenger_cache.adapters', $config['adapters']);
-        $container->setParameter('messenger_cache.runtime_cache_storage', (bool) $config['runtime_cache_storage']);
+        $container->setParameter('messenger_cache.pools', $config['pools']);
     }
 }
