@@ -25,8 +25,6 @@ use Throwable;
 
 class MessengerCacheManager implements MessengerCacheManagerInterface
 {
-    private const ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE = 'The %s pool does not support tags. Use TagAwareAdapterInterface instead.';
-
     private MessageBusInterface $messageBus;
 
     /**
@@ -55,98 +53,53 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
      */
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope
     {
-        try {
-            $cache = (new \ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
-        } catch (Throwable) {
-            throw new \LogicException(sprintf('The %s class has not declared the %s attribute which is required.', get_class($message), Cache::class));
-        }
-
-        if ($cache->pool && !in_array($cache->pool, array_keys($this->pools), true)) {
-            throw new \LogicException(sprintf('The %s pool is not configured.', $cache->pool));
-        }
-
-        /** @var AdapterInterface */
-        $pool = $this->pools[$cache->pool ?? self::DEFAULT_ADAPTER_ALIAS];
-
-        $forceCacheRefresh = false;
-        foreach ($stamps as $stamp) {
-            if ($stamp instanceof ForceCacheRefreshStamp) {
-                $forceCacheRefresh = true;
-                break;
-            }
-        }
+        $cache = $this->extractCacheAttribute($message);
+        $pool = $this->getCorrectPool($cache->pool);
+        $forceCacheRefresh = $this->isCacheRefreshForced($stamps);
 
         /** @var CacheItem $item */
         $item = $pool->getItem($cacheKey);
 
-        if ($cache->refreshAfter && $item->isHit() && !$forceCacheRefresh) {
-            $created = $item->get()->created;
+        if ($this->isCacheRefreshable($cache, $item, $forceCacheRefresh)) {
+            $this->dispatchAsyncCacheRefresh($message, $stamps);
 
-            if ((time() - $created) > $cache->refreshAfter) {
-                $this->messageBus->dispatch(
-                    new RefreshAsync(
-                        $message,
-                        $stamps
-                    )
-                );
-
-                return new Envelope($message, $stamps);
-            }
+            /*
+             * If we have to dispatch cache refresh we did not anything
+             * else to do with cache item, so we can return response
+             */
+            return $item->get()->value;
         }
 
-        if (!$item->isHit() || $forceCacheRefresh) {
-            $item->set(
-                (object) [
-                    'created' => time(),
-                    'value' => $callback(),
-                ]
+        if ($item->isHit() && !$forceCacheRefresh) {
+            return $item->get()->value;
+        }
+
+        /* item set */
+        $item->set(
+            (object) [
+                'created' => time(),
+                'value' => $callback(),
+            ]
+        );
+
+        /* item expires */
+        $item->expiresAfter($message instanceof DynamicTtl ? $message->getDynamicTtl() : $cache->ttl);
+
+        /* item tags */
+        if ($pool instanceof TagAwareAdapterInterface) {
+            $tags = $this->createTags(
+                $message instanceof OwnerIdentifier ? $message->getOwnerIdentifier() : null,
+                $message instanceof DynamicTags ? $message->getDynamicTags() : $cache->tags,
+                $cache->useOwnerIdentifierForTags,
+                $cache->group
             );
 
-            if ($message instanceof DynamicTtl) {
-                $item->expiresAfter($message->getDynamicTtl());
-            } else {
-                $item->expiresAfter($cache->ttl);
+            foreach ($tags as $tag) {
+                $item->tag($tag);
             }
-
-            /** @var OwnerIdentifier|DynamicTags $message */
-            if ($message instanceof DynamicTags ? $message->getDynamicTags() : $cache->tags) {
-                if (!$pool instanceof TagAwareAdapterInterface) {
-                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->pool));
-                }
-                $item->tag(
-                    $message instanceof DynamicTags ?
-                        $message->getDynamicTags() : ($cache->useOwnerIdentifierForTags ?
-                            array_map(fn (string $tag) => $this->tagProvider->createGroupTag($tag, $message->getOwnerIdentifier()), $cache->tags) :
-                            $cache->tags
-                        )
-                );
-            }
-
-            if ($cache->group) {
-                if (!$pool instanceof TagAwareAdapterInterface) {
-                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->pool));
-                }
-                $item->tag(
-                    $this->tagProvider->createGroupTag(
-                        $cache->group,
-                        $message instanceof OwnerIdentifier
-                            ? $message->getOwnerIdentifier()
-                            : null
-                    )
-                );
-            } elseif ($message instanceof OwnerIdentifier) {
-                if (!$pool instanceof TagAwareAdapterInterface) {
-                    throw new \LogicException(sprintf(self::ADAPTER_NOT_SUPPORT_TAGS_MESSAGE_TEMPLATE, $cache->pool));
-                }
-                $item->tag(
-                    $this->tagProvider->createOwnerTag(
-                        $message->getOwnerIdentifier()
-                    )
-                );
-            }
-
-            $pool->save($item);
         }
+
+        $pool->save($item);
 
         return $item->get()->value;
     }
@@ -172,6 +125,27 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         return $pool->deleteItem($cacheKey);
     }
 
+    public function clear(string $prefix = '', ?string $pool = null, ?Cache $cache = null, ?Cacheable $message = null): bool
+    {
+        if (empty(array_filter([$pool, $cache, $message]))) {
+            throw new \LogicException('At least one argument is required in addition to cacheKey.');
+        }
+
+        if ($message && !$cache && !$pool) {
+            $cache = (new \ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+            $pool = $cache->pool;
+        }
+
+        if ($cache && !$pool) {
+            $pool = $cache->pool;
+        }
+
+        /** @var AdapterInterface */
+        $pool = $this->pools[$pool ?? self::DEFAULT_ADAPTER_ALIAS];
+
+        return $pool->clear($prefix);
+    }
+
     /**
      * {@inheritdoc}
      *
@@ -182,25 +156,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         if (empty($tags) && empty($groups) && empty($ownerIdentifier)) {
             throw new \LogicException('At least one argument (tags, groups or ownerIdentifier) is required.');
         }
-
-        $_tags = [];
-        if ($ownerIdentifier && empty($groups)) {
-            $_tags[] = $this->tagProvider->createOwnerTag($ownerIdentifier);
-        }
-        if ($ownerIdentifier && !empty($groups)) {
-            foreach ($groups as $group) {
-                $_tags[] = $this->tagProvider->createGroupTag($group, $ownerIdentifier);
-            }
-        }
-        if (!empty($tags)) {
-            if ($useOwnerIdentifierForTags && $ownerIdentifier) {
-                foreach ($tags as $tag) {
-                    $_tags[] = $this->tagProvider->createGroupTag($tag, $ownerIdentifier);
-                }
-            } else {
-                $_tags = array_merge($_tags, $tags);
-            }
-        }
+        $_tags = $this->createTags($ownerIdentifier, $tags, $useOwnerIdentifierForTags, ...$groups);
 
         $result = [];
         foreach ($this->pools as $alias => $pool) {
@@ -212,5 +168,96 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         }
 
         return $result;
+    }
+
+    /** @throws \LogicException if Cache attribute is not declared. */
+    private function extractCacheAttribute(Cacheable $message): Cache
+    {
+        try {
+            return (new \ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+        } catch (Throwable) {
+            throw new \LogicException(sprintf('The %s class has not declared the %s attribute which is required.', get_class($message), Cache::class));
+        }
+    }
+
+    /** @throws \LogicException if pool is not configured. */
+    private function getCorrectPool(?string $pool = null): AdapterInterface
+    {
+        if ($pool && !in_array($pool, array_keys($this->pools), true)) {
+            throw new \LogicException(sprintf('The %s pool is not configured.', $pool));
+        }
+
+        /** @var AdapterInterface */
+        $pool = $this->pools[$pool ?? self::DEFAULT_ADAPTER_ALIAS];
+
+        return $pool;
+    }
+
+    /**
+     * @param StampInterface[] $stamps
+     */
+    private function isCacheRefreshForced(array $stamps): bool
+    {
+        foreach ($stamps as $stamp) {
+            if ($stamp instanceof ForceCacheRefreshStamp) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isCacheRefreshable(Cache $cache, CacheItem $item, bool $forceCacheRefresh): bool
+    {
+        return $item->isHit() && !$forceCacheRefresh && $cache->refreshAfter && (time() - $item->get()->created) > $cache->refreshAfter;
+    }
+
+    /**
+     * @param StampInterface[] $stamps
+     *
+     * @throws \LogicException if message bus is not set
+     */
+    private function dispatchAsyncCacheRefresh(Cacheable $message, array $stamps): void
+    {
+        if (!isset($this->messageBus)) {
+            throw new \LogicException('The message bus is not declared. You have to call $cacheManager->setMessageBus($messageBus) in Your MessageBus decorator to use the async cache refresh.');
+        }
+
+        $this->messageBus->dispatch(
+            new RefreshAsync(
+                $message,
+                $stamps
+            )
+        );
+    }
+
+    /**
+     * @param string[] $tags
+     *
+     * @return string[]
+     */
+    private function createTags(?string $ownerIdentifier, array $tags, bool $useOwnerIdentifierForTags, ?string ...$groups): array
+    {
+        $groups = array_filter($groups);
+        $createdTags = [];
+        if ($ownerIdentifier) {
+            $createdTags[] = $this->tagProvider->createOwnerTag($ownerIdentifier);
+        }
+        if (!empty($groups)) {
+            foreach ($groups as $group) {
+                $createdTags[] = $this->tagProvider->createGroupTag($group, $ownerIdentifier);
+            }
+        }
+        if (!empty($tags)) {
+            if ($useOwnerIdentifierForTags && $ownerIdentifier) {
+                foreach ($tags as $tag) {
+                    $createdTags[] = $this->tagProvider->createGroupTag($tag, $ownerIdentifier);
+                }
+            } else {
+                $createdTags = array_merge($createdTags, $tags);
+            }
+        }
+
+        return array_unique($createdTags);
     }
 }

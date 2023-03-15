@@ -23,7 +23,7 @@ class Invalidate
         public readonly array $tags = [],
         public readonly bool $useOwnerIdentifierForTags = false,
         public readonly ?array $groups = null,
-        public readonly bool $useOwnerIdentifier = true,
+        public readonly bool $useOwnerIdentifier = false,
         public readonly ?string $pool = null,
         public readonly bool $invalidateBeforeDispatch = false,
         public readonly bool $invalidateOnException = false,

@@ -25,6 +25,8 @@ interface MessengerCacheManagerInterface
 
     public function delete(string $cacheKey, ?string $pool = null, ?Cache $cache = null, ?Cacheable $message = null): bool;
 
+    public function clear(string $prefix = '', ?string $pool = null, ?Cache $cache = null, ?Cacheable $message = null): bool;
+
     /**
      * @param string[]    $tags
      * @param string[]    $groups
