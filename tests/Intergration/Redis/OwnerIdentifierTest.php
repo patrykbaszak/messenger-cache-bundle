@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PBaszak\MessengerCacheBundle\Tests\Integration\Redis\Helper\Application\Query;
+namespace PBaszak\MessengerCacheBundle\Tests\Integration\Redis;
 
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Attribute\Invalidate;
@@ -14,15 +14,6 @@ use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetArrayOfString
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
 
-#[Cache(pool: 'redis')]
-class GetCachedArrayOfStrings extends GetArrayOfStrings implements Cacheable, OwnerIdentifier
-{
-    public function getOwnerIdentifier(): string
-    {
-        return 'company_1634566';
-    }
-}
-
 #[Invalidate(useOwnerIdentifier: true)]
 class DoInvalidation extends DoNothing implements CacheInvalidation, OwnerIdentifier
 {
@@ -32,32 +23,42 @@ class DoInvalidation extends DoNothing implements CacheInvalidation, OwnerIdenti
     }
 }
 
+#[Cache(pool: 'redis')]
+class GetCachedArrayOfStrings extends GetArrayOfStrings implements Cacheable, OwnerIdentifier
+{
+    public function getOwnerIdentifier(): string
+    {
+        return 'company_1634566';
+    }
+}
+
 /** @group integration */
-class GetCachedArrayOfStringsTest extends KernelTestCase
+class OwnerIdentifierTest extends KernelTestCase
 {
     use HandleTrait;
 
     protected function setUp(): void
     {
         $this->messageBus = self::getContainer()->get('messenger.bus.default');
+        self::getContainer()->get('messenger_cache.manager')->clear(pool: 'redis');
     }
 
     /** @test */
-    public function shouldReturnSameArrayOfStringsTwice(): void
+    public function shouldReturnSameResponseGetCachedArrayOfStrings(): void
     {
-        $result = $this->handle(new GetCachedArrayOfStrings(20, 20));
-        $result2 = $this->handle(new GetCachedArrayOfStrings(20, 20));
+        $result1 = $this->handle(new GetCachedArrayOfStrings());
+        $result2 = $this->handle(new GetCachedArrayOfStrings());
 
-        self::assertEquals($result, $result2);
+        $this->assertEquals($result1, $result2);
     }
 
     /** @test */
-    public function shouldReturnDifferentArrayOfStringsAfterInvalidation(): void
+    public function shouldReturnNotSameResponseGetCachedArrayOfStrings(): void
     {
-        $result = $this->handle(new GetCachedArrayOfStrings(20, 20));
+        $result1 = $this->handle(new GetCachedArrayOfStrings());
         $this->handle(new DoInvalidation());
-        $result2 = $this->handle(new GetCachedArrayOfStrings(20, 20));
+        $result2 = $this->handle(new GetCachedArrayOfStrings());
 
-        self::assertNotEquals($result, $result2);
+        $this->assertNotEquals($result1, $result2);
     }
 }
