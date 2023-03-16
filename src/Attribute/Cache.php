@@ -27,7 +27,7 @@ class Cache
      *                                               prefixed with owner identifier
      */
     public function __construct(
-        public readonly ?int $ttl = 3600,
+        public readonly ?int $ttl = null,
         public readonly ?int $refreshAfter = null,
         public readonly ?string $pool = null,
         public readonly ?string $group = null,
