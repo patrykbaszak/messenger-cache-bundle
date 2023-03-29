@@ -48,6 +48,15 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         $this->messageBus = $messageBus;
     }
 
+    public function getPool(string $pool): AdapterInterface
+    {
+        if (!isset($this->pools[$pool])) {
+            throw new \LogicException(sprintf('Pool "%s" is not configured.', $pool));
+        }
+
+        return $this->pools[$pool];
+    }
+
     /**
      * @param StampInterface[] $stamps
      */
