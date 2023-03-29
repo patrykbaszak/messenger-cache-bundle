@@ -100,9 +100,9 @@ class StringsManager
 {
     use HandleTrait;
 
-    public function __construct(MessageBusInterface $messageBus)
+    public function __construct(MessageBusInterface $cachedMessageBus)
     {
-        $this->messageBus = $messageBus;
+        $this->messageBus = $cachedMessageBus;
     }
 
     public function getAlwaysSameRandomString(): string
@@ -153,9 +153,9 @@ class StringsManager
 {
     use HandleTrait;
 
-    public function __construct(MessageBusInterface $messageBus)
+    public function __construct(MessageBusInterface $cachedMessageBus)
     {
-        $this->messageBus = $messageBus;
+        $this->messageBus = $cachedMessageBus;
     }
 
     public function getAlwaysSameRandomString(): string
@@ -229,9 +229,9 @@ class StringsManager
 {
     use HandleTrait;
 
-    public function __construct(MessageBusInterface $messageBus)
+    public function __construct(MessageBusInterface $cachedMessageBus)
     {
-        $this->messageBus = $messageBus;
+        $this->messageBus = $cachedMessageBus;
     }
 
     public function getAlwaysSameRandomString(): string

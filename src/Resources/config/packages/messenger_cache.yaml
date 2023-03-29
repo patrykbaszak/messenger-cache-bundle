@@ -1,0 +1,3 @@
+messenger_cache:
+    decorated_message_buses:
+        - cachedMessage.bus

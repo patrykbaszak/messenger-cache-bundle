@@ -27,5 +27,6 @@ class MessengerCacheExtension extends Extension implements PrependExtensionInter
     {
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('packages/messenger.yaml');
+        $loader->load('packages/messenger_cache.yaml');
     }
 }
