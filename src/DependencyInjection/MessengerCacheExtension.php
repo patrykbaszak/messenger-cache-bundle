@@ -7,9 +7,10 @@ namespace PBaszak\MessengerCacheBundle\DependencyInjection;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
-class MessengerCacheExtension extends Extension
+class MessengerCacheExtension extends Extension implements PrependExtensionInterface
 {
     public function load(array $configs, ContainerBuilder $container): void
     {
@@ -19,5 +20,12 @@ class MessengerCacheExtension extends Extension
         $loader->load('services.yaml');
 
         $container->setParameter('messenger_cache.pools', $config['pools']);
+        $container->setParameter('messenger_cache.decorated_message_buses', $config['decorated_message_buses']);
+    }
+
+    public function prepend(ContainerBuilder $container): void
+    {
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $loader->load('packages/messenger.yaml');
     }
 }

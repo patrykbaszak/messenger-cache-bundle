@@ -39,7 +39,7 @@ class OwnerIdentifierTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        $this->messageBus = self::getContainer()->get('messenger.bus.default');
+        $this->messageBus = self::getContainer()->get('cachedMessage.bus');
         self::getContainer()->get('messenger_cache.manager')->clear(pool: 'redis');
     }
 

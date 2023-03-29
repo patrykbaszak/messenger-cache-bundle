@@ -3,3 +3,5 @@ messenger_cache:
         default: filesystem
         runtime: runtime
         redis: redis
+    decorated_message_buses:
+        - cachedMessage.bus

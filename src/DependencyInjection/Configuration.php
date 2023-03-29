@@ -26,6 +26,12 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode('default')->defaultValue(AdapterInterface::class)->end()
                     ->end()
                 ->end()
+                ->arrayNode('decorated_message_buses')
+                    ->isRequired()
+                    ->requiresAtLeastOneElement()
+                    ->defaultValue(['cachedMessage.bus'])
+                    ->prototype('scalar')
+                ->end()
             ->end()
         ->end();
 

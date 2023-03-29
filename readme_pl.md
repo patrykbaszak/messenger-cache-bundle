@@ -191,7 +191,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\StampInterface;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 
-#[AsDecorator('messenger.bus.default')]
+#[AsDecorator('cachedMessage.bus')]
 class MessageBusDecorator implements MessageBusInterface
 {
     private bool $forceCacheRefresh;

@@ -14,12 +14,10 @@ use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Contract\Required\CacheInvalidation;
 use PBaszak\MessengerCacheBundle\Message\InvalidateAsync;
 use PBaszak\MessengerCacheBundle\Stamps\InvalidationResultsStamp;
-use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\StampInterface;
 
-#[AsDecorator('messenger.bus.default')]
 class MessageBusCacheDecorator implements MessageBusInterface
 {
     public function __construct(
