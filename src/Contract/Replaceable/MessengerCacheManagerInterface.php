@@ -6,6 +6,7 @@ namespace PBaszak\MessengerCacheBundle\Contract\Replaceable;
 
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
+use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\StampInterface;
@@ -17,6 +18,8 @@ interface MessengerCacheManagerInterface
     public const DEFAULT_CACHE_FILE = '/messenger_cache.php';
 
     public function setMessageBus(MessageBusInterface $messageBus): void;
+
+    public function getPool(string $pool): AdapterInterface;
 
     /**
      * @param StampInterface[] $stamps
