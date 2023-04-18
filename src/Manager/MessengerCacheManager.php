@@ -7,9 +7,7 @@ namespace PBaszak\MessengerCacheBundle\Manager;
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags;
 use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTtl;
-use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
-use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheOwnerTagProviderInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Message\RefreshAsync;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
@@ -31,7 +29,6 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
      * @param array<string,AdapterInterface> $pools
      */
     public function __construct(
-        private MessengerCacheOwnerTagProviderInterface $tagProvider,
         private array $pools = [],
         string $kernelCacheDir = '',
     ) {
@@ -96,12 +93,8 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
 
         /* item tags */
         if ($pool instanceof TagAwareAdapterInterface) {
-            $tags = $this->createTags(
-                $message instanceof OwnerIdentifier ? $message->getOwnerIdentifier() : null,
-                $message instanceof DynamicTags ? $message->getDynamicTags() : $cache->tags,
-                $cache->useOwnerIdentifierForTags,
-                $cache->group
-            );
+            $tags = $message instanceof DynamicTags ? $message->getDynamicTags() : [];
+            $tags = array_merge($tags, $cache->tags);
 
             foreach ($tags as $tag) {
                 $item->tag($tag);
@@ -160,18 +153,17 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
      *
      * @throws \InvalidArgumentException When $tags is not valid
      */
-    public function invalidate(array $tags = [], array $groups = [], ?string $ownerIdentifier = null, bool $useOwnerIdentifierForTags = false, ?string $pool = null): array
+    public function invalidate(array $tags = [], ?string $pool = null): array
     {
-        if (empty($tags) && empty($groups) && empty($ownerIdentifier)) {
-            throw new \LogicException('At least one argument (tags, groups or ownerIdentifier) is required.');
+        if (empty($tags)) {
+            throw new \InvalidArgumentException('The tags array cannot be empty.');
         }
-        $_tags = $this->createTags($ownerIdentifier, $tags, $useOwnerIdentifierForTags, ...$groups);
 
         $result = [];
         foreach ($this->pools as $alias => $pool) {
             if ($pool instanceof TagAwareAdapterInterface) {
-                foreach ($_tags as $_tag) {
-                    $result[$alias][$_tag] = $pool->invalidateTags([$_tag]);
+                foreach ($tags as $tag) {
+                    $result[$alias][$tag] = $pool->invalidateTags([$tag]);
                 }
             }
         }
@@ -238,35 +230,5 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
                 $stamps
             )
         );
-    }
-
-    /**
-     * @param string[] $tags
-     *
-     * @return string[]
-     */
-    private function createTags(?string $ownerIdentifier, array $tags, bool $useOwnerIdentifierForTags, ?string ...$groups): array
-    {
-        $groups = array_filter($groups);
-        $createdTags = [];
-        if ($ownerIdentifier) {
-            $createdTags[] = $this->tagProvider->createOwnerTag($ownerIdentifier);
-        }
-        if (!empty($groups)) {
-            foreach ($groups as $group) {
-                $createdTags[] = $this->tagProvider->createGroupTag($group, $ownerIdentifier);
-            }
-        }
-        if (!empty($tags)) {
-            if ($useOwnerIdentifierForTags && $ownerIdentifier) {
-                foreach ($tags as $tag) {
-                    $createdTags[] = $this->tagProvider->createGroupTag($tag, $ownerIdentifier);
-                }
-            } else {
-                $createdTags = array_merge($createdTags, $tags);
-            }
-        }
-
-        return array_unique($createdTags);
     }
 }

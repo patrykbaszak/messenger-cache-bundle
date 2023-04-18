@@ -21,7 +21,7 @@ class RefreshAsyncHandler
     {
         $this->messageBus->dispatch(
             $message->message,
-            $message->stamps + [new ForceCacheRefreshStamp()]
+            array_merge($message->stamps, [new ForceCacheRefreshStamp()])
         );
     }
 }

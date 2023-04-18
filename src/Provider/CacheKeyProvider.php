@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\Provider;
 
 use PBaszak\MessengerCacheBundle\Contract\Optional\HashableInstance;
-use PBaszak\MessengerCacheBundle\Contract\Optional\OwnerIdentifier;
 use PBaszak\MessengerCacheBundle\Contract\Optional\UniqueHash;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheKeyProviderInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
@@ -27,7 +26,6 @@ class CacheKeyProvider implements MessengerCacheKeyProviderInterface
             '|',
             array_filter(
                 [
-                    $message instanceof OwnerIdentifier ? $message->getOwnerIdentifier() : null,
                     hash($this->hashAlgo, get_class($message)),
                     $message instanceof UniqueHash ? $message->getUniqueHash() : hash(
                         $this->hashAlgo,

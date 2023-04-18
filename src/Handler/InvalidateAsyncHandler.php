@@ -20,9 +20,6 @@ class InvalidateAsyncHandler
     {
         $this->cacheManager->invalidate(
             $message->tags,
-            $message->groups,
-            $message->ownerIdentifier,
-            $message->useOwnerIdentifierForTags,
             $message->pool
         );
     }

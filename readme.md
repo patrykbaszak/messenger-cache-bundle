@@ -181,7 +181,7 @@ $result1 = $stringsManager->getAlwaysSameRandomString();
 var_dump($result0 === $result1); // false
 ```
 
-### **Przykład nr 3 (ForceCacheRefreshStamp)** ###
+### **Example no 3 (ForceCacheRefreshStamp)** ###
 
 ```php
 # src/Infrastructure/Symfony/Messenger/MessageBusDecorator.php
@@ -207,7 +207,7 @@ class MessageBusDecorator implements MessageBusInterface
     public function dispatch(object $message, array $stamps = []): Envelope
     {
         if ($this->forceCacheRefresh) {
-            $stamps += [new ForceCacheRefreshStamp()];
+            $stamps = array_merge($stamps, [new ForceCacheRefreshStamp()]);
         }
 
         return $this->decorated->dispatch($message, $stamps);
@@ -263,18 +263,13 @@ var_dump($result0 === $result1); // false
 | `$ttl` | The cache lifetime in seconds. You may also be interested in the `DynamicTtl` interface, which allows you to dynamically choose the `ttl` for the cache. |
 | `$refreshAfter` | The cache validity period in seconds. After this time has elapsed, when the `Bundle` is called again, it will try to refresh this cache. **NOTE: You need to add `PBaszak\MessengerCacheBundle\Message\RefreshAsync` to your `MessageBusInterface`-based queue system (AMQP, Redis, Doctrine - see packages: `Symfony/amqp-messenger`, `Symfony/redis-messenger`, `Symfony/doctrine-messenger`)**. |
 | `$pool` | The pool alias that will be used to handle the cache. |
-| `$group` | This is a tag that is used strictly to bind multiple caches into one group (it works closely with the `OwnerIdentifier` interface, which allows you to specify the ownership of the cache group). |
 | `$tags` | A list of constant tags for a given resource, but you may be interested in the `DynamicTags` interface, which allows you to fully customize it. |
-| `$useOwnerIdentifierForTags` | If `true`, the tags will have a prefix assigned with the value returned by the `getOwnerIdentifier` method of the `OwnerIdentifier` interface. The tag will look like this: `_{ownerIdentifier}_{tag}`. |
 
 ### Invalidate ###
 
 | Parameter | Description |
 |:---------|:-----|
 | `$tags` | A list of constant tags that should be invalidated. You can replace them with the `DynamicTags` interface |
-| `$useOwnerIdentifierForTags` | By default `false`. If set to `true`, the tags in `$tags` will have a prefix returned by the `getOwnerIdentifier` method of the `OwnerIdentifier` interface |
-| `$groups` | A list of groups (tags) that should be invalidated. |
-| `$useOwnerIdentifier` | By default `true`. Works similarly to `$useOwnerIdentifierForTags`, but for `$groups`. |
 | `$pool` | An pool to invalidate. If `null`, all `TagAwareAdapterInterface` pools will be invalidated. |
 | `$invalidateBeforeDispatch` | If you need to, cache invalidation can be performed before executing the actual `Message`. |
 | `$invalidateOnException` | If handling the `Message` results in an exception, cache invalidation can still be performed after executing the `Message` if you want. |
@@ -288,5 +283,4 @@ var_dump($result0 === $result1); // false
 | `DynamicTags` | The `getDynamicTags(): array` method allows you to dynamically provide tags for cache handling (replaces the `Cache(tags: [])` property). |
 | `DynamicTtl` | The `getDynamicTtl(): int` method allows you to dynamically provide a `ttl` value in seconds for the cache. |
 | `HashableInstance` | The `getHashableInstance(): Cacheable` method should return the `Message` object in a form that can be hashed. You may need to use this interface if the cache you want to store should be available to multiple users and at the same time you have user context in the `Message`. This method allows you to get rid of it. |
-| `OwnerIdentifier` | The `getOwnerIdentifier(): string` method allows you to assign the cache to any owner described by a `string` returned by this method. |
 | `UniqueHash` | The `getUniqueHash(): string` method allows you to define the hash for the `Message` instance yourself. You can use this instead of `HashableInstance`. |
