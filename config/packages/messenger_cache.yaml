@@ -1,5 +1,8 @@
 messenger_cache:
+    refresh_triggered_ttl: 600
     pools:
         default: filesystem
         runtime: runtime
         redis: redis
+    decorated_message_buses:
+        - cachedMessage.bus

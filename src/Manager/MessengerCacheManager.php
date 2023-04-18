@@ -10,6 +10,7 @@ use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTtl;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Message\RefreshAsync;
+use PBaszak\MessengerCacheBundle\Stamps\CacheRefreshTriggeredStamp;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -31,6 +32,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     public function __construct(
         private array $pools = [],
         string $kernelCacheDir = '',
+        private int $refreshTriggeredTtl = 600
     ) {
         if (empty($this->pools)) {
             $this->pools[self::DEFAULT_ADAPTER_ALIAS] = new PhpArrayAdapter(
@@ -62,12 +64,22 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         $cache = $this->extractCacheAttribute($message);
         $pool = $this->getCorrectPool($cache->pool);
         $forceCacheRefresh = $this->isCacheRefreshForced($stamps);
+        $refreshTriggeredKey = $cacheKey.'|triggered';
         $resultsStamps = $forceCacheRefresh ? [new ForceCacheRefreshStamp()] : [];
 
         /** @var CacheItem $item */
         $item = $pool->getItem($cacheKey);
 
         if ($this->isCacheRefreshable($cache, $item, $forceCacheRefresh)) {
+            $triggeredItem = $pool->getItem($refreshTriggeredKey);
+            if ($triggeredItem->isHit()) {
+                return $item->get()->value->with(...$resultsStamps);
+            }
+
+            $triggeredItem->set(true);
+            $triggeredItem->expiresAfter($this->refreshTriggeredTtl);
+            $pool->save($triggeredItem);
+            $resultsStamps[] = new CacheRefreshTriggeredStamp();
             $this->dispatchAsyncCacheRefresh($message, $stamps);
 
             /*
@@ -103,6 +115,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         }
 
         $pool->save($item);
+        $this->delete($refreshTriggeredKey, $cache->pool);
 
         return $item->get()->value->with(...$resultsStamps);
     }

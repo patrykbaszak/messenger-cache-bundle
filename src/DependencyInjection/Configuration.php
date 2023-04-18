@@ -17,6 +17,9 @@ class Configuration implements ConfigurationInterface
 
         $treeBuilder->getRootNode()
             ->children()
+                ->integerNode('refresh_triggered_ttl')
+                    ->defaultValue(600)
+                ->end()
                 ->arrayNode('pools')
                     ->isRequired()
                     ->requiresAtLeastOneElement()
@@ -30,7 +33,7 @@ class Configuration implements ConfigurationInterface
                     ->isRequired()
                     ->requiresAtLeastOneElement()
                     ->defaultValue(['cachedMessage.bus'])
-                    ->prototype('scalar')
+                    ->prototype('scalar')->end()
                 ->end()
             ->end()
         ->end();
