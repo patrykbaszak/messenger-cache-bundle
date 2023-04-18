@@ -14,7 +14,7 @@ class RefreshAsync
      */
     public function __construct(
         public readonly Cacheable $message,
-        public readonly array $stamps
+        public readonly array $stamps = []
     ) {
     }
 }
