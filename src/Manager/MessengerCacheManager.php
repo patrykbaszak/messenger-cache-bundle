@@ -184,7 +184,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         foreach ($this->pools as $alias => $pool) {
             if ($pool instanceof TagAwareAdapterInterface) {
                 foreach ($tags as $tag) {
-                    $result[$alias][$tag] = $pool->invalidateTags([$tag]);
+                    $result[$tag][$alias] = $pool->invalidateTags([$tag]);
                 }
             }
         }
