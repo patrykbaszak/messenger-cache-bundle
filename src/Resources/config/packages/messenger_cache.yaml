@@ -1,3 +1,5 @@
 messenger_cache:
     decorated_message_buses:
         - cachedMessage.bus
+    message_bus_decorators:
+        0: PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheDecorator
