@@ -12,7 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 
-#[Cache(pool: 'redis')]
+#[Cache(pool: 'runtime')]
 class GetCachedStrings extends GetStrings implements Cacheable
 {
 }
@@ -25,7 +25,7 @@ class MessengerCacheManagerTest extends KernelTestCase
     protected function setUp(): void
     {
         $this->messageBus = self::getContainer()->get('cachedMessage.bus');
-        self::getContainer()->get('messenger_cache.manager')->clear(pool: 'redis');
+        self::getContainer()->get('messenger_cache.manager')->clear(pool: 'runtime');
     }
 
     /** @test */
