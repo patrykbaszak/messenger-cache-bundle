@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\DependencyInjection;
 
-use PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheDecorator;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -27,15 +26,31 @@ class MessengerCacheManagerPass implements CompilerPassInterface
 
         /** @var string[] $decoratedBuses */
         $decoratedBuses = $container->getParameter('messenger_cache.decorated_message_buses');
+        /** @var string[] $messageBusDecorators */
+        $messageBusDecorators = $container->getParameter('messenger_cache.message_bus_decorators');
+        uksort($messageBusDecorators, function ($a, $b) {
+            $a = (int) str_replace('_', '-', (string) $a);
+            $b = (int) str_replace('_', '-', (string) $b);
 
-        /* feat/7 - messageBus decoration strategy implementation */
+            return $b <=> $a;
+        });
+
         foreach ($decoratedBuses as $bus) {
+            $decoratedDefinitionId = $bus.'.decorated';
             $definition = $container->getDefinition($bus);
-            $decorator = $container->register($bus.'.cache_decorator', MessageBusCacheDecorator::class)
-                ->setArgument('$decorated', $definition)
-                ->setAutowired(true)
-                ->setAutoConfigured(true);
-            $decorator->setDecoratedService($bus);
+            $container->setDefinition($decoratedDefinitionId, $definition);
+            $i = 0;
+            foreach ($messageBusDecorators as $priority => $decorator) {
+                $id = $bus.'.decorator_no_'.$i;
+                $decorator = $container->register($id, $decorator)
+                    ->setArgument('$decorated', $earlierDecorator ?? $definition)
+                    ->setAutowired(true)
+                    ->setAutoConfigured(true);
+                ++$i;
+                $earlierDecorator = $decorator;
+            }
+
+            $container->setDefinition($bus, $decorator ?? $definition);
         }
     }
 }

@@ -6,3 +6,5 @@ messenger_cache:
         redis: redis
     decorated_message_buses:
         - cachedMessage.bus
+    message_bus_decorators:
+        '-1': PBaszak\MessengerCacheBundle\Tests\Helper\Domain\Decorator\LoggingMessageBusDecorator

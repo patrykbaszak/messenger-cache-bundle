@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\Tests\Unit\Symfony\Messenger;
 
 use PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheDecorator;
+use PBaszak\MessengerCacheBundle\Tests\Helper\Domain\Decorator\LoggingMessageBusDecorator;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\HandleTrait;
 
@@ -21,6 +22,7 @@ class MessageBusCacheDecoratorTest extends KernelTestCase
     /** @test */
     public function shouldInstanceOfDecorator(): void
     {
-        $this->assertInstanceOf(MessageBusCacheDecorator::class, $this->messageBus);
+        $this->assertInstanceOf(LoggingMessageBusDecorator::class, $this->messageBus);
+        $this->assertInstanceOf(MessageBusCacheDecorator::class, $this->messageBus->decorated);
     }
 }
