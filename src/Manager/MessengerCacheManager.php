@@ -62,6 +62,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         $cache = $this->extractCacheAttribute($message);
         $pool = $this->getCorrectPool($cache->pool);
         $forceCacheRefresh = $this->isCacheRefreshForced($stamps);
+        $resultsStamps = $forceCacheRefresh ? [new ForceCacheRefreshStamp()] : [];
 
         /** @var CacheItem $item */
         $item = $pool->getItem($cacheKey);
@@ -73,18 +74,18 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
              * If we have to dispatch cache refresh we did not anything
              * else to do with cache item, so we can return response
              */
-            return $item->get()->value;
+            return $item->get()->value->with(...$resultsStamps);
         }
 
         if ($item->isHit() && !$forceCacheRefresh) {
-            return $item->get()->value;
+            return $item->get()->value->with(...$resultsStamps);
         }
 
         /* item set */
         $item->set(
             (object) [
                 'created' => time(),
-                'value' => $callback(),
+                'value' => $callback()->withoutAll(ForceCacheRefreshStamp::class),
             ]
         );
 
@@ -103,7 +104,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
 
         $pool->save($item);
 
-        return $item->get()->value;
+        return $item->get()->value->with(...$resultsStamps);
     }
 
     public function delete(string $cacheKey, ?string $pool = null, ?Cache $cache = null, ?Cacheable $message = null): bool
