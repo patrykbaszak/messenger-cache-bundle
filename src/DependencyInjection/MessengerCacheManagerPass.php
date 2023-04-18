@@ -23,6 +23,7 @@ class MessengerCacheManagerPass implements CompilerPassInterface
 
         $manager->setArgument('$pools', $poolDefinitions);
         $manager->setArgument('$kernelCacheDir', $container->getParameter('kernel.cache_dir'));
+        $manager->setArgument('$refreshTriggeredTtl', $container->getParameter('messenger_cache.refresh_triggered_ttl'));
 
         /** @var string[] $decoratedBuses */
         $decoratedBuses = $container->getParameter('messenger_cache.decorated_message_buses');
