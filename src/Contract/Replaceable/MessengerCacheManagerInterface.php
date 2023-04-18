@@ -32,10 +32,9 @@ interface MessengerCacheManagerInterface
 
     /**
      * @param string[]    $tags
-     * @param string[]    $groups
-     * @param string|null $pool   if `null` the all available TagAware pools will be invalidated
+     * @param string|null $pool if `null` the all available TagAware pools will be invalidated
      *
      * @return array<string,array<string,bool>> The invalidated tags. ['pool_alias' => ['tag' => true]]
      */
-    public function invalidate(array $tags = [], array $groups = [], ?string $ownerIdentifier = null, bool $useOwnerIdentifierForTags = false, ?string $pool = null): array;
+    public function invalidate(array $tags, ?string $pool = null): array;
 }

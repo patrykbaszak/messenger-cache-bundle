@@ -1,6 +1,2 @@
 parameters:
-	ignoreErrors:
-		-
-			message: "#^Result of && is always false\\.$#"
-			count: 1
-			path: ../../src/Decorator/MessageBusCacheDecorator.php
+	ignoreErrors: []
