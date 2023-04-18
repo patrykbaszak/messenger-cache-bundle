@@ -4,6 +4,9 @@ messenger_cache:
     # after succesful refresh. To short value may trigger more than one refresh action for 
     # specific item. Recommended is 10 minutes.
     refresh_triggered_ttl: 600
+    # If You need handle cache events like hit, miss, refresh and stamps are not enough for
+    # You then change this option to `true`. It add additional events to cache, but it costs performance
+    use_events: true
     # aliases for pools to use them in cache attribute and cache invalidation attribute
     # aliases are required and `default` alias is required.
     pools:

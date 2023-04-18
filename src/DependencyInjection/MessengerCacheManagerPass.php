@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\DependencyInjection;
 
+use PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheDecorator;
+use PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheEventsDecorator;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -23,11 +25,22 @@ class MessengerCacheManagerPass implements CompilerPassInterface
         $manager->setArgument('$pools', $poolDefinitions);
         $manager->setArgument('$kernelCacheDir', $container->getParameter('kernel.cache_dir'));
         $manager->setArgument('$refreshTriggeredTtl', $container->getParameter('messenger_cache.refresh_triggered_ttl'));
+        $useEvents = $container->getParameter('messenger_cache.use_events');
 
         /** @var string[] $decoratedBuses */
         $decoratedBuses = array_unique($container->getParameter('messenger_cache.decorated_message_buses'));
         /** @var string[] $messageBusDecorators */
         $messageBusDecorators = $container->getParameter('messenger_cache.message_bus_decorators');
+
+        if ($useEvents) {
+            $messageBusDecorators = array_filter($messageBusDecorators, function ($decorator) {
+                return MessageBusCacheDecorator::class !== $decorator && MessageBusCacheEventsDecorator::class !== $decorator;
+            });
+
+            $messageBusDecorators['0'] = MessageBusCacheEventsDecorator::class;
+            $messageBusDecorators['1'] = MessageBusCacheDecorator::class;
+        }
+
         uksort($messageBusDecorators, function ($a, $b) {
             $a = (int) str_replace('_', '-', (string) $a);
             $b = (int) str_replace('_', '-', (string) $b);

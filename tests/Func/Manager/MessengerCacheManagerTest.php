@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\Tests\Manager;
 
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
+use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Provider\CacheKeyProvider;
+use PBaszak\MessengerCacheBundle\Stamps\CacheItemHitStamp;
+use PBaszak\MessengerCacheBundle\Stamps\CacheItemMissStamp;
+use PBaszak\MessengerCacheBundle\Stamps\CacheItemTagsStamp;
 use PBaszak\MessengerCacheBundle\Stamps\CacheRefreshTriggeredStamp;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 use PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query\GetString;
@@ -24,6 +28,15 @@ class GetCachedStrings extends GetStrings implements Cacheable
 #[Cache(pool: 'runtime', refreshAfter: 1)]
 class GetCachedString extends GetString implements Cacheable
 {
+}
+
+#[Cache(pool: 'runtime')]
+class GetCachedStringWithTag extends GetString implements Cacheable, DynamicTags
+{
+    public function getDynamicTags(): array
+    {
+        return ['tag'];
+    }
 }
 
 /** @group func */
@@ -102,5 +115,75 @@ class MessengerCacheManagerTest extends KernelTestCase
         $this->messageBus->dispatch($query);
         $envelope = $this->messageBus->dispatch($query);
         $this->assertEmpty($envelope->all(CacheRefreshTriggeredStamp::class));
+    }
+
+    /** @test */
+    public function shouldAddCacheItemMissStampToOutputEnvelopeOnCacheMiss(): void
+    {
+        $query = new GetCachedStrings();
+
+        $envelope = $this->messageBus->dispatch($query);
+        $this->assertNotEmpty($envelope->all(CacheItemMissStamp::class));
+    }
+
+    /** @test */
+    public function shouldNotAddCacheItemHitStampToOutputEnvelopeOnCacheMiss(): void
+    {
+        $query = new GetCachedStrings();
+
+        $envelope = $this->messageBus->dispatch($query);
+        $this->assertEmpty($envelope->all(CacheItemHitStamp::class));
+    }
+
+    /** @test */
+    public function shouldAddCacheItemHitStampToOutputEnvelopeOnCacheHit(): void
+    {
+        $query = new GetCachedStrings();
+
+        $this->messageBus->dispatch($query);
+        $envelope = $this->messageBus->dispatch($query);
+        $this->assertNotEmpty($envelope->all(CacheItemHitStamp::class));
+    }
+
+    /** @test */
+    public function shouldNotAddCacheItemMissStampToOutputEnvelopeOnCacheHit(): void
+    {
+        $query = new GetCachedStrings();
+
+        $this->messageBus->dispatch($query);
+        $envelope = $this->messageBus->dispatch($query);
+        $this->assertEmpty($envelope->all(CacheItemMissStamp::class));
+    }
+
+    /** @test */
+    public function shouldAddCacheItemTagsStampToOutputEnvelopeOnCacheMiss(): void
+    {
+        $query = new GetCachedStringWithTag();
+
+        $envelope = $this->messageBus->dispatch($query);
+        $this->assertNotEmpty($stamps = $envelope->all(CacheItemTagsStamp::class));
+        $this->assertEquals(['tag'], $stamps[0]->tags);
+    }
+
+    /** @test */
+    public function shouldAddCacheItemTagsStampToOutputEnvelopeOnCacheHit(): void
+    {
+        $query = new GetCachedStringWithTag();
+
+        $this->messageBus->dispatch($query);
+        $envelope = $this->messageBus->dispatch($query);
+        $this->assertNotEmpty($stamps = $envelope->all(CacheItemTagsStamp::class));
+        $this->assertEquals(['tag'], $stamps[0]->tags);
+    }
+
+    /** @test */
+    public function shouldReturnOnlyOneCacheItemTagsStampOnForceRefreshCache(): void
+    {
+        $query = new GetCachedStringWithTag();
+
+        $this->messageBus->dispatch($query);
+        $envelope = $this->messageBus->dispatch($query, [new ForceCacheRefreshStamp()]);
+        $this->assertCount(1, $stamps = $envelope->all(CacheItemTagsStamp::class));
+        $this->assertEquals(['tag'], $stamps[0]->tags);
     }
 }

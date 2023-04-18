@@ -20,6 +20,7 @@ class MessengerCacheExtension extends Extension implements PrependExtensionInter
         $loader->load('services.yaml');
 
         $container->setParameter('messenger_cache.pools', $config['pools']);
+        $container->setParameter('messenger_cache.use_events', $config['use_events']);
         $container->setParameter('messenger_cache.decorated_message_buses', $config['decorated_message_buses']);
         $container->setParameter('messenger_cache.refresh_triggered_ttl', $config['refresh_triggered_ttl']);
         $container->setParameter('messenger_cache.message_bus_decorators', $config['message_bus_decorators']);

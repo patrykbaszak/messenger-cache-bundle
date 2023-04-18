@@ -10,6 +10,9 @@ use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTtl;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Message\RefreshAsync;
+use PBaszak\MessengerCacheBundle\Stamps\CacheItemHitStamp;
+use PBaszak\MessengerCacheBundle\Stamps\CacheItemMissStamp;
+use PBaszak\MessengerCacheBundle\Stamps\CacheItemTagsStamp;
 use PBaszak\MessengerCacheBundle\Stamps\CacheRefreshTriggeredStamp;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
@@ -69,6 +72,8 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
 
         /** @var CacheItem $item */
         $item = $pool->getItem($cacheKey);
+        $resultsStamps[] = $item->isHit() ? new CacheItemHitStamp() : new CacheItemMissStamp();
+        $resultsStamps[] = new CacheItemTagsStamp($item->getMetadata()[CacheItem::METADATA_TAGS] ?? []);
 
         if ($this->isCacheRefreshable($cache, $item, $forceCacheRefresh)) {
             $triggeredItem = $pool->getItem($refreshTriggeredKey);
@@ -108,6 +113,8 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         if ($pool instanceof TagAwareAdapterInterface) {
             $tags = $message instanceof DynamicTags ? $message->getDynamicTags() : [];
             $tags = array_merge($tags, $cache->tags);
+            $resultsStamps = array_filter($resultsStamps, fn (StampInterface $stamp) => !$stamp instanceof CacheItemTagsStamp);
+            $resultsStamps[] = new CacheItemTagsStamp($tags);
 
             foreach ($tags as $tag) {
                 $item->tag($tag);
@@ -177,7 +184,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         foreach ($this->pools as $alias => $pool) {
             if ($pool instanceof TagAwareAdapterInterface) {
                 foreach ($tags as $tag) {
-                    $result[$alias][$tag] = $pool->invalidateTags([$tag]);
+                    $result[$tag][$alias] = $pool->invalidateTags([$tag]);
                 }
             }
         }
