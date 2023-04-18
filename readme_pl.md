@@ -34,10 +34,25 @@ Zalecane wstępne ustawienia:
 ```yaml
 # config/packages/messenger_cache.yaml
 messenger_cache:
+    # If You use RefreshAsync (it's message) / refreshAfter (in Cache attribute argument) then
+    # you must have declared time of live info that refresh was triggered. It's deleted
+    # after succesful refresh. To short value may trigger more than one refresh action for 
+    # specific item. Recommended is 10 minutes.
+    refresh_triggered_ttl: 600
+    # aliases for pools to use them in cache attribute and cache invalidation attribute
+    # aliases are required and `default` alias is required.
     pools:
         default: filesystem
         runtime: runtime
         redis: redis
+    # this is default value and You don't need to add it, but if You want decorates different buses
+    # you can declare them all here.
+    decorated_message_buses:
+        - cachedMessage.bus
+    # message bus decorators whic You want add. The main cache decorator has 
+    # priority 0 if higher it will be closer to main message bus.
+    message_bus_decorators:
+        '-1': PBaszak\MessengerCacheBundle\Tests\Helper\Domain\Decorator\LoggingMessageBusDecorator
 ```
 Opis konfiguracji:
 | Parametr | Opis |

@@ -1,2 +1,6 @@
 parameters:
-	ignoreErrors: []
+	ignoreErrors:
+		-
+			message: "#^Parameter \\#1 \\$array of function array_unique expects array, array\\|bool\\|float\\|int\\|string\\|null given\\.$#"
+			count: 1
+			path: ../../src/DependencyInjection/MessengerCacheManagerPass.php

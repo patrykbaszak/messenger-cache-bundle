@@ -25,7 +25,7 @@ class MessengerCacheManagerPass implements CompilerPassInterface
         $manager->setArgument('$refreshTriggeredTtl', $container->getParameter('messenger_cache.refresh_triggered_ttl'));
 
         /** @var string[] $decoratedBuses */
-        $decoratedBuses = $container->getParameter('messenger_cache.decorated_message_buses');
+        $decoratedBuses = array_unique($container->getParameter('messenger_cache.decorated_message_buses'));
         /** @var string[] $messageBusDecorators */
         $messageBusDecorators = $container->getParameter('messenger_cache.message_bus_decorators');
         uksort($messageBusDecorators, function ($a, $b) {
