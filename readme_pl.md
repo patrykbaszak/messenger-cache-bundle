@@ -39,6 +39,9 @@ messenger_cache:
     # after succesful refresh. To short value may trigger more than one refresh action for 
     # specific item. Recommended is 10 minutes.
     refresh_triggered_ttl: 600
+    # If You need handle cache events like hit, miss, refresh and stamps are not enough for
+    # You then change this option to `true`. It add additional events to cache, but it costs performance
+    use_events: true
     # aliases for pools to use them in cache attribute and cache invalidation attribute
     # aliases are required and `default` alias is required.
     pools:
@@ -55,9 +58,13 @@ messenger_cache:
         '-1': PBaszak\MessengerCacheBundle\Tests\Helper\Domain\Decorator\LoggingMessageBusDecorator
 ```
 Opis konfiguracji:
-| Parametr | Opis |
-|----------|------|
-| `messenger_cache.pools`  | Lista poolów obsługiwanych przez `MessengerCacheBundle`, obowiązkowy jest tylko `default`, który to będzie wybrany, jeśli w atrybucie `Cache` nie wskażesz innego poola. Używanie aliasów jest obowiązkowe. Adaptery muszą być serwisami, tj. możliwe, że będziesz musiał je zdefiniować w pliku `services.yaml`, przykład poniżej tabelki. |
+| Parametr | Opis | Wartości |
+|----------|------|----------|
+| `refresh_triggered_ttl` | Czas przechowywania informacji o tym, że asynchroniczna akcja odświeżenia zawartości cache została uruchomiona. W tym czasie nie zostanie dodana do kolejki kolejna akcja odświeżenia tego konkretnego cache. | `600` sekund, które są wartością rekomendowaną dla większości przypadków. |
+| `use_events` | `true` / `false`, gdzie `false` jest wartością rekomendowaną. `true` spowoduje dodanie message bus dekoratora, który na podstawie zwróconych przez `MessengerCacheManager` oraz `MessageBusCacheDecorator` stampów (`StampInterface` z paczki `Symfony/Messenger`) | `false` - domyślnie, <br>`true` - jeśli tworzysz EventListenera dla cache. |
+| `pools`  | Lista poolów obsługiwanych przez `MessengerCacheBundle`, obowiązkowy jest tylko `default`, który to będzie wybrany, jeśli w atrybucie `Cache` nie wskażesz innego poola. Używanie aliasów jest obowiązkowe. Adaptery muszą być serwisami, tj. możliwe, że będziesz musiał je zdefiniować w pliku `cache.yaml`, przykład poniżej tabelki. | `default: redis`<br>`runtime: runtime`<br>itd. w konwencji `$alias: $pool`. |
+| `decorated_message_buses` | Cache nie jest z automatu przypisany do wszystkich message busy w Twoim projekcie. W tym miejscu możesz ustalić, które, sposród listy zawartej w pliku `config/packages/messenger.yaml` mają wspierać cache. Domyślna wartość to `cachedMessage.bus` i sprawia ona, że wystarczy, że nazwiesz argument swojego konstruktora `MessageBusInterface $cachedMessageBus`, aby została zastosowana. | `- cachedMessage.bus`<br>`- messenger.bus.default`<br>itd. w konwencji: `$bus` jako element tablicy. |
+| `message_bus_decorators` | Lista dekoratorów przypisanych do wszystkich message busy wypisanych w punkcie `decorated_message_buses`. Domyślnie jest tutaj tylko `MessageBusCacheDecorator` z priorytetem równym `0`. Jednak, jeśli ustawisz opcje `use_events` na `true` to `MessageBusCacheDecorator` otrzyma priorytet `1`, a przed nim, z priorytetem `0` zostanie ustawiony `MessageBusCacheEventsDecorator`. Jak już pewnie rozumiesz, im niższa wartość priorytetu tym szybciej wybrany dekorator będzie obsługiwał `message`, a ten o najwyższym priorytecie będzie komunikował się bezpośrednio z `MessageBusInterface`. Zwróć jednak uwagę, że priorytety wyższe niż ten przypisany do `MessageBusCacheDecorator` nie powinny obsługiwać komunikacji z `MessengerCacheManager`, a jedynie obsługiwać dalszy dowolny proces, który chcesz zastosować przed ostatecznym `MessageBusInterface`. Standardowo inne dekoratory, z innych bibliotek najczęściej pojawią się przed wszystkimi innymi dekoratorami wynikającymi z tej listy. | `"-1": \App\MessageBus\Decorator\MyAwesomeDecorator`<br>jak widzisz konwencja dopuszcza wartości ujemne priorytetów i takie tutaj rekomendujemy. Zasada: `"$priorty": $decoratorClassString` |
 
 Przykładowa deklaracja poolów jako serwisów:
 ```yaml
@@ -68,6 +75,7 @@ framework:
         pools:
             runtime: 
                 adapter: cache.adapter.array
+                tags: true
             filesystem: 
                 adapter: cache.adapter.filesystem
             redis:
@@ -198,31 +206,37 @@ var_dump($result0 === $result1); // false
 
 ### **Przykład nr 3 (ForceCacheRefreshStamp)** ###
 
+Dodawanie dekoratora:
+```yaml
+# config/packages/messenger_cache.yaml
+message_bus_decorators:
+    "-1": App\Infrastructure\Symfony\Messenger\MessageBusDecorator
+```
+
+Implementacja przykładowej dekoratora:
 ```php
 # src/Infrastructure/Symfony/Messenger/MessageBusDecorator.php
-use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
-use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Messenger\Stamp\StampInterface;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 
-#[AsDecorator('cachedMessage.bus')]
 class MessageBusDecorator implements MessageBusInterface
 {
-    private bool $forceCacheRefresh;
+    private Request $request;
+    private static array $cacheRefreshedMessages;
 
     public function __construct(
         private MessageBusInterface $decorated,
         RequestStack $requestStack,
     ) {
+        $this->request = $requestStack->getMainRequest();
         $this->forceCacheRefresh = $requestStack->getMainRequest()->query->has('forceCacheRefresh');
     }
 
     /** @param StampInterface[] $stamps */
     public function dispatch(object $message, array $stamps = []): Envelope
     {
-        if ($this->forceCacheRefresh) {
+        if (!in_array($message, self::$cacheRefreshedMessages) && $this->request->query->has('forceCacheRefresh')) {
             $stamps = array_merge($stamps, [new ForceCacheRefreshStamp()]);
+            self::$cacheRefreshedMessages = $message;
         }
 
         return $this->decorated->dispatch($message, $stamps);
@@ -230,9 +244,11 @@ class MessageBusDecorator implements MessageBusInterface
 }
 ```
 
+Tak przekazany parametr żądania spowoduje synchroniczne odświeżanie wszystkich cache w ramach żądania.
 ```sh
 curl --location --request GET 'http://localhost/strings/random?forceCacheRefresh'
 ```
+Dla bardziej precyzyjnych rozwiązań rekomenduję stworzenie własnej metodyki decydowania o tym, który cache należy odświeżyć i nierekomenduję odświeżania wszystkich możliwych cache w ramach jednego żądania. Osobiście stosuję funkcje warunkową `if ((new ReflectionClass($message))->getShortName() === $this->request->query->get('forceCacheRefresh')) { // add ForceCacheRefreshStamp }`, wtedy przykładowy parametr może wyglądać następująco: `?forceCacheRefresh=GetUserConfig`.
 
 ```php
 # src/Domain/Manager/StringsManager.php
