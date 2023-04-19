@@ -55,9 +55,13 @@ messenger_cache:
         '-1': PBaszak\MessengerCacheBundle\Tests\Helper\Domain\Decorator\LoggingMessageBusDecorator
 ```
 Configuration description:
-| Parameter | Description |
-|----------|-------------|
-| `messenger_cache.pools`  | List of pools supported by `MessengerCacheBundle`, only `default` is mandatory and will be selected if no other pool is specified in the `Cache` attribute. Using aliases is mandatory. Adapters must be services, so you may need to define them in the `services.yaml` file. Example below the table. |
+| Parameter | Description | Values |
+|----------|-------------|--------|
+| `refresh_triggered_ttl` | The amount of time for which information about triggering asynchronous cache content refresh is stored. During this time, another refresh action for this specific cache will not be added to the queue. | `600` seconds, which is the recommended value for most cases. |
+| `use_events` | `true` / `false`, where `false` is the recommended value. `true` will add a message bus decorator based on stamps returned by `MessengerCacheManager` and `MessageBusCacheDecorator` (`StampInterface` from `Symfony/Messenger` package). | `false` - by default, <br>`true` - if you create an EventListener for the cache. |
+| `pools`  | A list of pools supported by `MessengerCacheBundle`. Only `default` is mandatory, and it will be chosen if you do not specify another pool in the `Cache` attribute. Using aliases is mandatory. Adapters must be services, i.e., you may need to define them in the `cache.yaml` file. An example is provided below the table. | `default: redis`<br>`runtime: runtime`<br>etc. in the form of `$alias: $pool`. |
+| `decorated_message_buses` | Cache is not automatically assigned to all message buses in your project. Here you can specify which ones, from the list in the `config/packages/messenger.yaml` file, should support the cache. The default value is `cachedMessage.bus`, which means that naming your constructor argument `MessageBusInterface $cachedMessageBus` is enough to apply the cache. | `- cachedMessage.bus`<br>`- messenger.bus.default`<br>etc., in the form of `$bus` as an array element. |
+| `message_bus_decorators` | A list of decorators assigned to all message buses listed in the `decorated_message_buses` section. By default, only `MessageBusCacheDecorator` with a priority equal to `0` is present here. However, if you set the `use_events` option to `true`, the `MessageBusCacheDecorator` will receive a priority of `1`, and before it, with a priority of `0`, the `MessageBusCacheEventsDecorator` will be set. As you probably already understand, the lower the priority value, the faster the selected decorator will handle the `message`, and the one with the highest priority will communicate directly with `MessageBusInterface`. However, note that priorities higher than that assigned to `MessageBusCacheDecorator` should not handle communication with `MessengerCacheManager` but only handle any other process you want to apply before the final `MessageBusInterface`. Normally, other decorators from different libraries will appear before all other decorators resulting from this list. | `"-1": \App\MessageBus\Decorator\MyAwesomeDecorator`<br>As you can see, the convention allows negative priority values, and we recommend using them here. Rule: `"$priority": $decorator |
 
 Example declaration of pools as services:
 ```yaml
@@ -68,6 +72,7 @@ framework:
         pools:
             runtime: 
                 adapter: cache.adapter.array
+                tags: true
             filesystem: 
                 adapter: cache.adapter.filesystem
             redis:
@@ -198,31 +203,37 @@ var_dump($result0 === $result1); // false
 
 ### **Example no 3 (ForceCacheRefreshStamp)** ###
 
+Adding a decorator:
+```yaml
+# config/packages/messenger_cache.yaml
+message_bus_decorators:
+    "-1": App\Infrastructure\Symfony\Messenger\MessageBusDecorator
+```
+
+Decorator example implementation:
 ```php
 # src/Infrastructure/Symfony/Messenger/MessageBusDecorator.php
-use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
-use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Messenger\Stamp\StampInterface;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
 
-#[AsDecorator('cachedMessage.bus')]
 class MessageBusDecorator implements MessageBusInterface
 {
-    private bool $forceCacheRefresh;
+    private Request $request;
+    private static array $cacheRefreshedMessages;
 
     public function __construct(
         private MessageBusInterface $decorated,
         RequestStack $requestStack,
     ) {
+        $this->request = $requestStack->getMainRequest();
         $this->forceCacheRefresh = $requestStack->getMainRequest()->query->has('forceCacheRefresh');
     }
 
     /** @param StampInterface[] $stamps */
     public function dispatch(object $message, array $stamps = []): Envelope
     {
-        if ($this->forceCacheRefresh) {
+        if (!in_array($message, self::$cacheRefreshedMessages) && $this->request->query->has('forceCacheRefresh')) {
             $stamps = array_merge($stamps, [new ForceCacheRefreshStamp()]);
+            self::$cacheRefreshedMessages = $message;
         }
 
         return $this->decorated->dispatch($message, $stamps);
@@ -230,9 +241,11 @@ class MessageBusDecorator implements MessageBusInterface
 }
 ```
 
+This parameter passed in the request will cause synchronous refresh of all caches within the request.
 ```sh
 curl --location --request GET 'http://localhost/strings/random?forceCacheRefresh'
 ```
+For more precise solutions, I recommend creating your own methodology for deciding which cache to refresh and not recommending refreshing all possible caches within a single request. Personally, I use a conditional function if ((new ReflectionClass($message))->getShortName() === $this->request->query->get('forceCacheRefresh')) { // add ForceCacheRefreshStamp }. Then an example parameter could look like this: ?forceCacheRefresh=GetUserConfig.
 
 ```php
 # src/Domain/Manager/StringsManager.php
