@@ -70,7 +70,7 @@ class GetUserConfig implements Cacheable, DynamicTags
 }
 ```
 
-### Krok 3 ###
+### Step 3 ###
 Modify the constructor of the class where you execute `$this->messageBus->dispatch(new GetUserConfig($userId))` or `$this->handle(new GetUserConfig($userId))`.
 
 Before modification:
