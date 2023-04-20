@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PBaszak\MessengerCacheBundle\DependencyInjection;
 
 use PBaszak\MessengerCacheBundle\MessengerCacheBundle;
-use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -30,13 +29,8 @@ class Configuration implements ConfigurationInterface
                     ->prototype('scalar')->end()
                 ->end()
                 ->arrayNode('pools')
-                    ->isRequired()
-                    ->requiresAtLeastOneElement()
                     ->useAttributeAsKey('alias')
                     ->prototype('scalar')->end()
-                    ->children()
-                        ->scalarNode('default')->defaultValue(AdapterInterface::class)->end()
-                    ->end()
                 ->end()
                 ->arrayNode('decorated_message_buses')
                     ->isRequired()
