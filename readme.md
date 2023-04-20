@@ -19,6 +19,150 @@ return [
 ];
 ```
 
+## Quick start ##
+### **Step 0** ###
+After installing the package, first make sure that you have defined `default_bus` in the `config/packages/messenger.yaml` file. If you don't have it, Symfony will either return an error or not, which is also a problem if not all `MessageBusInterface $messageBus` injections in your application are to be decorated by `MessageBusCacheDecorator`.
+In most cases, it should look like this:
+```yaml
+framework:
+    messenger:
+        default_bus: messenger.bus.default
+        buses:
+            messenger.bus.default:
+```
+Note that there is no declaration of `cachedMessage.bus` here, it has already been declared by this bundle and you can use it by changing the constructor argument name from `MessageBusInterface $messageBus` to `MessageBusInterface $cachedMessageBus`.
+### **Step 1** ###
+During the first compilation of Symfony, an error may occur stating that you have not defined a default `cache pool`, which you can define in the `messenger_cache.pools` or `framework.cache.pools` array. This array is responsible for the list of cache adapters that the `MessengerCacheManager` will handle. To declare it correctly, start by visiting the `config/packages/cache.yaml` file, where you will find the definitions of `cache pools`. The default `pool` is named `app` in the case of definitions in `framework.cache.pools` or `default` in the case of alias definitions in `messenger_cache.pools`. Below is an example file from `config/packages/cache.yaml`:
+```yaml
+framework:
+    cache:
+        pools:
+            app: # By default, the pool used by the bundle is the one named `app`.
+                adapter: cache.adapter.redis_tag_aware
+                tags: true
+            runtime: 
+                adapter: cache.adapter.array
+                tags: true
+            filesystem:
+                adapter: cache.adapter.filesystem
+```
+There is no obligation to use tag supporting adapters if you will not use cache invalidation. However, even then I recommend using adapters that support caching.
+You do not have the file `config/packages/messenger_cache.yaml` in your project and you do not need it as part of a "quick start". But below in this readme file you will find information on what such a file should look like and what configuration options it has.
+
+### Step 2 ###
+Modify your Message class, the response of which you want to cache, according to the example below. Note that I have chosen a more complex example to show you how to associate cache with a user in such a way that it will be possible to invalidate this cache, which I think will be the most common use case:
+
+```php
+# src/Application/User/Query/GetUserConfig.php
+use PBaszak\MessengerCacheBundle\Attribute\Cache; # required attribute
+use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags; # optional interface
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable; # required interface
+
+#[Cache(ttl: 3600)]
+class GetUserConfig implements Cacheable, DynamicTags
+{
+    public function __construct(public readonly string $userId) {}
+
+    public function getDynamicTags(): array
+    {
+        return ['user_' . $this->userId];
+    }
+}
+```
+
+### Krok 3 ###
+Modify the constructor of the class where you execute `$this->messageBus->dispatch(new GetUserConfig($userId))` or `$this->handle(new GetUserConfig($userId))`.
+
+Before modification:
+```php
+class UserConfigController extends AbstractController
+{
+    public function __construct(MessageBusInterface $messageBus) {}
+}
+```
+
+After modification:
+```php
+class UserConfigController extends AbstractController
+{
+    public function __construct(MessageBusInterface $cachedMessageBus) {}
+}
+```
+**DONE**.<br> Now, if you call `GetUserConfig()` in the `UserConfigController` class, the response will be cached in the default cache pool. 
+
+### **Extra Step** (invalidation) ###
+```php
+# src/Application/User/Command/UpdateUserConfig.php
+use PBaszak\MessengerCacheBundle\Attribute\Invalidate; # required attribute
+use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags; # optional interface
+use PBaszak\MessengerCacheBundle\Contract\Required\CacheInvalidation; # required interface
+
+#[Invalidate()]
+class UpdatetUserConfig implements CacheInvalidation, DynamicTags
+{
+    public function __construct(
+        public readonly string $usesId,
+        public readonly array $config,
+    ) {}
+
+    public function getDynamicTags(): array
+    {
+        return ['user_' . $this->userId];
+    }
+}
+```
+As you can see, the `getDynamicTags` method has not changed, which is why I strongly recommend placing this method in Traits.
+
+### **Extra step** (removing user context, e.g. in case of cache for user group)
+```php
+# src/Application/User/Query/GetUserConfig.php
+use PBaszak\MessengerCacheBundle\Attribute\Cache; # required attribute
+use PBaszak\MessengerCacheBundle\Contract\Optional\HashableInstance; # optional interface
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable; # required interface
+
+#[Cache(refreshAfter: 3600)] # The "refreshAfter" will cause that after an hour, on the next cache call, it will be asynchronously refreshed and the old cache will be returned.
+class GetCompanyConfig implements Cacheable, HashableInstance
+{
+    public function __construct(
+        public readonly ?User $user,
+        public readonly string $companyId,
+    ) {}
+
+    public function getHashableInstance(): Cacheable
+    {
+        return new self(null, $this->companyId); # The original Message will still be processed, but it will be used to create a unique hash. Therefore, if we didn't remove the user context, the cache would only be available to them, not the entire company.
+    }
+}
+```
+What if I can't delete user context, for example because I don't want to write new self() with 20 constructor arguments? I have an alternative solution for you!
+
+```php
+# src/Application/User/Query/GetUserConfig.php
+use PBaszak\MessengerCacheBundle\Attribute\Cache; # required attribute
+use PBaszak\MessengerCacheBundle\Contract\Optional\UniqueHash; # optional interface
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable; # required interface
+
+#[Cache(refreshAfter: 3600)]
+class GetCompanyConfig implements Cacheable, UniqueHash
+{
+    public function __construct(
+        public readonly ?User $user,
+        public readonly string $companyId,
+    ) {}
+
+    public function getUniqueHash(): string
+    {
+        return 'company_' . $this->companyId;
+    }
+}
+```
+Will that be enough? Won't the cache interfere with the cache of another Message that has the same UniqueHash?<br>
+**No, it won't.** The cache key also includes a hash generated from the full class name of the Message.
+
+<br>
+
+That's all for the quick start. You are ready to deploy a high-performance cache in your application, with a simple implementation that allows for the creation of truly advanced caching and cache invalidation systems, as that's precisely what this package was created for.
+
 <hr>
 <hr>
 
@@ -34,7 +178,7 @@ cp vendor/pbaszak/messenger-cache-bundle/config/packages/messenger_cache.yaml co
 # create
 touch config/packages/messenger_cache.yaml
 ```
-Recommended initial settings:
+
 ```yaml
 # config/packages/messenger_cache.yaml
 messenger_cache:
@@ -43,6 +187,9 @@ messenger_cache:
     # after succesful refresh. To short value may trigger more than one refresh action for 
     # specific item. Recommended is 10 minutes.
     refresh_triggered_ttl: 600
+    # If You need handle cache events like hit, miss, refresh and stamps are not enough for
+    # You then change this option to `true`. It add additional events to cache, but it costs performance
+    use_events: true
     # aliases for pools to use them in cache attribute and cache invalidation attribute
     # aliases are required and `default` alias is required.
     pools:
@@ -56,7 +203,7 @@ messenger_cache:
     # message bus decorators whic You want add. The main cache decorator has 
     # priority 0 if higher it will be closer to main message bus.
     message_bus_decorators:
-        '-1': PBaszak\MessengerCacheBundle\Tests\Helper\Domain\Decorator\LoggingMessageBusDecorator
+        '-1': PBaszak\MessengerCacheBundle\Tests\Helper\Domain\Decorator\LoggingMessageBusDecorator # this one decorator was only for tests. If You want logging decorator You have to make it, but before You start check `use_events`, maybe it will be better option to logging or metrics or anything You want like adding cache result header in response. Just make Your own EventListener ;).
 ```
 Configuration description:
 | Parameter | Description | Values |

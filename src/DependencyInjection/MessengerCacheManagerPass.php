@@ -6,6 +6,8 @@ namespace PBaszak\MessengerCacheBundle\DependencyInjection;
 
 use PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheDecorator;
 use PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheEventsDecorator;
+use Symfony\Bundle\FrameworkBundle\DependencyInjection\Configuration as FrameworkConfiguration;
+use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -16,9 +18,10 @@ class MessengerCacheManagerPass implements CompilerPassInterface
         /** @var array<string,string> */
         $pools = $container->getParameter('messenger_cache.pools');
         $manager = $container->getDefinition('messenger_cache.manager');
+        $frameworkCache = $this->getFrameworkCacheConfiguration($container);
 
         $poolDefinitions = [];
-        foreach ($pools as $alias => $pool) {
+        foreach ($this->getPoolList($pools, $frameworkCache['pools'] ?? []) as $alias => $pool) {
             $poolDefinitions[$alias] = $container->findDefinition($pool);
         }
 
@@ -65,5 +68,43 @@ class MessengerCacheManagerPass implements CompilerPassInterface
 
             $container->setDefinition($bus, $decorator ?? $definition);
         }
+    }
+
+    /**
+     * @param array<string,string> $messengerCachePools
+     * @param array<string,mixed>  $frameworkCachePools
+     *
+     * @return array<string,string>
+     */
+    private function getPoolList(array $messengerCachePools, array $frameworkCachePools): array
+    {
+        $pools = [];
+        foreach ($frameworkCachePools as $alias => $pool) {
+            $pools[$alias] = $alias;
+        }
+
+        foreach ($messengerCachePools as $alias => $pool) {
+            unset($pools[$pool]);
+            $pools[$alias] = $pool;
+        }
+
+        $pools['default'] ??= $pools['app'] ?? null;
+
+        if (null === $pools['default']) {
+            throw new \RuntimeException('No default cache pool found. Please configure one of the following: "messenger_cache.pools.default" or "framework.cache.pools.app".');
+        }
+
+        return array_filter($pools);
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function getFrameworkCacheConfiguration(ContainerBuilder $container): array
+    {
+        $frameworkConfiguration = new FrameworkConfiguration(false);
+        $frameworkConfig = (new Processor())->processConfiguration($frameworkConfiguration, $container->getExtensionConfig('framework'));
+
+        return $frameworkConfig['cache'] ?? [];
     }
 }

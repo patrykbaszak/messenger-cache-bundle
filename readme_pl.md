@@ -19,6 +19,152 @@ return [
 ];
 ```
 
+## Szybki start ##
+### **Krok 0** ### 
+Po zainstalowaniu paczki w pierwszej kolejności upewnij się, że w pliku `config/packages/messenger.yaml` masz zdefiniowany `default_bus`, jeśli nie masz, to Symfony zwróci Ci błąd **lub nie** co też jest problemem, jeśli nie wszystkie wstrzyknięcia `MessageBusInterface $messageBus` w Twojej aplikacji mają być udekorowane przez `MessageBusCacheDecorator`.
+W większości przypadków powinno to wyglądać następująco:
+```yaml
+framework:
+    messenger:
+        default_bus: messenger.bus.default
+        buses:
+            messenger.bus.default:
+```
+Zauważ, że nie ma tutaj deklaracji `cachedMessage.bus`, ta została już zadeklarowana przez niniejszy bundle i możesz z niej skorzystać zamieniając nazwę argumentu konstruktora z `MessageBusInterface $messageBus` na `MessageBusInterface $cachedMessageBus`.
+### **Krok 1** ### 
+Przy pierwszej kompilacji Symfony może wystąpić błąd mówiący, że nie masz zdefiniowanego domyślnego `cache pool`, który to możesz zdefiniować w tablicy `messenger_cache.pools` lub `framework.cache.pools`. Ta tablica odpowiada za listę adapterów cache, które będzie obsługiwać `MessengerCacheManager`. Aby ją poprawnie zadeklarować zaczniemy od odwiedzenia pliku `config/packages/cache.yaml`, w którym znajdziesz definicje `cache pools`. Domyślnym `pool` jest ten o nazwie `app` w przypadku definicji w `framework.cache.pools` lub `default` w przypadku definicji aliasów w `messenger_cache.pools`. Poniżej przykład pliku z pliku `config/packages/cache.yaml`:
+```yaml
+framework:
+    cache:
+        pools:
+            app: # domyślnie używany pool przez bundle to ten o nazwie `app`
+                adapter: cache.adapter.redis_tag_aware
+                tags: true
+            runtime: 
+                adapter: cache.adapter.array
+                tags: true
+            filesystem:
+                adapter: cache.adapter.filesystem
+```
+Nie ma obowiązku używania adapterów wspierających tagi, jeśli nie będziesz używał inwalidacji cache. Niemniej nawet wtedy rekomenduję używanie adapterów wspierających cache.
+Pliku `config/packages/messenger_cache.yaml` nie masz w swoim projekcie i w ramach "szybkiego startu" nie potrzebujesz go mieć. Ale poniżej w tym pliku readme znajdziesz informacje jak taki plik powinien wyglądać i jakie ma możliwości konfiguracji.
+
+### Krok 2 ###
+Zmodyfikuj swoją klasę typu Message, której odpowiedź chcesz cache'ować, zgodnie z poniższym przykładem. Uwaga, wybrałem bardziej skomplikowany przykład, aby pokazać Ci jak związać cache z użytkownikiem, w taki sposób, aby była możliwość inwalidacji tego cache, co wydaję mi się będzie najczęstszym przypadkiem użycia:
+
+```php
+# src/Application/User/Query/GetUserConfig.php
+use PBaszak\MessengerCacheBundle\Attribute\Cache; # obowiązkowy atrybut
+use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags; # opcjonalny interfejs
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable; # obowiązkowy interfejs
+
+#[Cache(ttl: 3600)]
+class GetUserConfig implements Cacheable, DynamicTags
+{
+    public function __construct(public readonly string $userId) {}
+
+    public function getDynamicTags(): array
+    {
+        return ['user_' . $this->userId];
+    }
+}
+```
+
+### Krok 3 ###
+Zmodyfikuj konstruktor klasy, w której wykonujesz `$this->messageBus->dispatch(new GetUserConfig($userId))` lub `$this->handle(new GetUserConfig($userId))`.
+
+Przed modyfikacją:
+```php
+class UserConfigController extends AbstractController
+{
+    public function __construct(MessageBusInterface $messageBus) {}
+}
+```
+
+Po modyfikacji:
+```php
+class UserConfigController extends AbstractController
+{
+    public function __construct(MessageBusInterface $cachedMessageBus) {}
+}
+```
+**GOTOWE**.<br>Teraz, jeśli wywołujesz `GetUserConfig()` w klasie `UserConfigController` to odpowiedź będzie cache'owana w domyślnym `cache pool`.
+
+### **Krok dodatkowy** (inwalidacja) ###
+```php
+# src/Application/User/Command/UpdateUserConfig.php
+use PBaszak\MessengerCacheBundle\Attribute\Invalidate; # obowiązkowy atrybut
+use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags; # opcjonalny interfejs
+use PBaszak\MessengerCacheBundle\Contract\Required\CacheInvalidation; # obowiązkowy interfejs
+
+#[Invalidate()]
+class UpdatetUserConfig implements CacheInvalidation, DynamicTags
+{
+    public function __construct(
+        public readonly string $usesId,
+        public readonly array $config,
+    ) {}
+
+    public function getDynamicTags(): array
+    {
+        return ['user_' . $this->userId];
+    }
+}
+```
+Jak widzisz metoda `getDynamicTags` nie uległa zmianie, dlatego bardzo mocno rekomenduję umieszczanie tej metody w Traitach.
+
+### **Krok dodatkowy** (usuwanie kontekstu użytkownika, np. w przypadku cache dla grupy użytkowników) ###
+
+```php
+# src/Application/User/Query/GetUserConfig.php
+use PBaszak\MessengerCacheBundle\Attribute\Cache; # obowiązkowy atrybut
+use PBaszak\MessengerCacheBundle\Contract\Optional\HashableInstance; # opcjonalny interfejs
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable; # obowiązkowy interfejs
+
+#[Cache(refreshAfter: 3600)] # refreshAfter spowoduje, że po godzinie, przy następnym wywołaniu cache zostanie odświeżony asynchronicznie i zostanie zwrócony stary cache.
+class GetCompanyConfig implements Cacheable, HashableInstance
+{
+    public function __construct(
+        public readonly ?User $user,
+        public readonly string $companyId,
+    ) {}
+
+    public function getHashableInstance(): Cacheable
+    {
+        return new self(null, $this->companyId); # obsłużony nadal zostanie oryginalny Message, ale ten posłuży do stworzenia unikalnego hasha, więc gdybyśmy nie usunęli kontekstu użytkownika, to cache byłby dostępny tylko dla niego, a nie dla całej firmy.
+    }
+}
+```
+
+A co jeśli nie mogę usunąć kontekstu użytkownika, choćby dlatego, że nie chce mi się pisać new self() z 20 argumentami konstruktora? **Mam dla Ciebie alternatywne rozwiązanie!**
+
+```php
+# src/Application/User/Query/GetUserConfig.php
+use PBaszak\MessengerCacheBundle\Attribute\Cache; # obowiązkowy atrybut
+use PBaszak\MessengerCacheBundle\Contract\Optional\UniqueHash; # opcjonalny interfejs
+use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable; # obowiązkowy interfejs
+
+#[Cache(refreshAfter: 3600)]
+class GetCompanyConfig implements Cacheable, UniqueHash
+{
+    public function __construct(
+        public readonly ?User $user,
+        public readonly string $companyId,
+    ) {}
+
+    public function getUniqueHash(): string
+    {
+        return 'company_' . $this->companyId;
+    }
+}
+```
+Czy tyle wystarczy? Czy cache nie będzie mieszał się z cachem innego Message, w którym będzie ten sam UniqueHash?<br>
+**Nie będzie**. Klucz cache składa się jeszcze z hasha powstałego z pełnej nazwy klasy Message.
+
+<br>
+
+To już wszystko, jeśli chodzi o szybki start. Jesteś gotowy do wdrażania wydajnego cache w swojej aplikacji, z prostą implementacją, pozwalającą na tworzenie naprawdę zaawansowanych systemów cache'owania i inwalidacji cache, bo właśnie do takich celów ta paczka została stworzona.
+
 <hr>
 <hr>
 
@@ -34,7 +180,7 @@ cp vendor/pbaszak/messenger-cache-bundle/config/packages/messenger_cache.yaml co
 # tworzenie
 touch config/packages/messenger_cache.yaml
 ```
-Zalecane wstępne ustawienia:
+
 ```yaml
 # config/packages/messenger_cache.yaml
 messenger_cache:
@@ -59,7 +205,7 @@ messenger_cache:
     # message bus decorators whic You want add. The main cache decorator has 
     # priority 0 if higher it will be closer to main message bus.
     message_bus_decorators:
-        '-1': PBaszak\MessengerCacheBundle\Tests\Helper\Domain\Decorator\LoggingMessageBusDecorator
+        '-1': PBaszak\MessengerCacheBundle\Tests\Helper\Domain\Decorator\LoggingMessageBusDecorator # this one decorator was only for tests. If You want logging decorator You have to make it, but before You start check `use_events`, maybe it will be better option to logging or metrics or anything You want like adding cache result header in response. Just make Your own EventListener ;).
 ```
 Opis konfiguracji:
 | Parametr | Opis | Wartości |
