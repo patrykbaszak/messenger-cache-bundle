@@ -22,13 +22,31 @@ class CacheKeyProvider implements MessengerCacheKeyProviderInterface
      */
     public function createKey(Cacheable $message, array $stamps = []): string
     {
+        if (in_array($this->hashAlgo, hash_algos(), true)) {
+            return implode(
+                '|',
+                array_filter(
+                    [
+                        hash($this->hashAlgo, get_class($message)),
+                        $message instanceof UniqueHash ? $message->getUniqueHash() : hash(
+                            $this->hashAlgo,
+                            serialize($message instanceof HashableInstance ? $message->getHashableInstance() : $message)
+                        ),
+                    ]
+                )
+            );
+        }
+
+        /*
+         * PHP 8.0 do not support `xxh3` hash algorithm.
+         * @see https://php.watch/versions/8.1/xxHash
+         */
         return implode(
             '|',
             array_filter(
                 [
-                    hash($this->hashAlgo, get_class($message)),
-                    $message instanceof UniqueHash ? $message->getUniqueHash() : hash(
-                        $this->hashAlgo,
+                    (string) crc32(get_class($message)),
+                    $message instanceof UniqueHash ? $message->getUniqueHash() : (string) crc32(
                         serialize($message instanceof HashableInstance ? $message->getHashableInstance() : $message)
                     ),
                 ]

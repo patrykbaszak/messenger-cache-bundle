@@ -7,7 +7,7 @@ namespace PBaszak\MessengerCacheBundle\Tests\Helper\Application\Query;
 class GetString
 {
     public function __construct(
-        public readonly int $length = 10,
+        public int $length = 10,
     ) {
     }
 }

@@ -6,9 +6,7 @@ namespace PBaszak\MessengerCacheBundle\Handler;
 
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use PBaszak\MessengerCacheBundle\Message\InvalidateAsync;
-use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
-#[AsMessageHandler(handles : InvalidateAsync::class)]
 class InvalidateAsyncHandler
 {
     public function __construct(
@@ -19,8 +17,8 @@ class InvalidateAsyncHandler
     public function __invoke(InvalidateAsync $message): void
     {
         $this->cacheManager->invalidate(
-            $message->tags,
-            $message->pool
+            $message->getTags(),
+            $message->getPool()
         );
     }
 }

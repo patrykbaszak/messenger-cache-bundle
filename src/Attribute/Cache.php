@@ -17,10 +17,10 @@ class Cache
      *                                  them in invalidation process.
      */
     public function __construct(
-        public readonly ?int $ttl = null,
-        public readonly ?int $refreshAfter = null,
-        public readonly ?string $pool = null,
-        public readonly array $tags = [],
+        public ?int $ttl = null,
+        public ?int $refreshAfter = null,
+        public ?string $pool = null,
+        public array $tags = [],
     ) {
     }
 }

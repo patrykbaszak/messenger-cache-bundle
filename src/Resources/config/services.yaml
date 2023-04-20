@@ -18,3 +18,11 @@ services:
         arguments:
             - '@PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheDecorator.inner'
             - '@messenger_cache.manager'
+
+    PBaszak\MessengerCacheBundle\Handler\InvalidateAsyncHandler:
+        tags: 
+            - { name: 'messenger.message_handler', handles: PBaszak\MessengerCacheBundle\Message\InvalidateAsync }
+
+    PBaszak\MessengerCacheBundle\Handler\RefreshAsyncHandler:
+        tags: 
+            - { name: 'messenger.message_handler', handles: PBaszak\MessengerCacheBundle\Message\RefreshAsync }

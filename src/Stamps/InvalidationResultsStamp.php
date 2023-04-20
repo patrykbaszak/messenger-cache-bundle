@@ -12,7 +12,7 @@ class InvalidationResultsStamp implements StampInterface
      * @param array<string,array<string, bool>> $results
      */
     public function __construct(
-        public readonly array $results,
+        public array $results,
     ) {
     }
 }

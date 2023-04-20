@@ -1,35 +1,25 @@
 {
     "name": "pbaszak/symfony-messenger-cache-bundle",
     "type": "symfony-bundle",
-    "keywords": [
-        "symfony",
-        "messenger",
-        "cache",
-        "bundle"
-    ],
-    "description": "Messenger Cache Bundle is a package for the Symfony Messenger component that enables creating, invalidating, and refreshing cache using attributes. This allows for faster and more efficient processing of asynchronous tasks.",
     "require": {
-        "php": ">=8.0",
-        "symfony/messenger": "^5.4 || ^6.0 || ^6.2",
-        "symfony/cache": "^5.4 || ^6.0 || ^6.2",
-        "symfony/config": "^5.4 || ^6.0 || ^6.2",
-        "symfony/dependency-injection": "^5.4 || ^6.0 || ^6.2",
-        "symfony/http-kernel": "^5.4 || ^6.0 || ^6.2"
-    },
-    "conflict": {
-        "php": "<8.0"
+        "php": "^8.0.0",
+        "symfony/messenger": "5.4.*",
+        "symfony/cache": "5.4.*",
+        "symfony/config": "5.4.*",
+        "symfony/dependency-injection": "5.4.*",
+        "symfony/http-kernel": "5.4.*"
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "^5.4 || ^6.0 || ^6.2",
+        "symfony/phpunit-bridge": "5.4.*",
         "phpstan/phpstan": "^1.9",
         "phpstan/phpstan-symfony": "^1.2",
         "phpstan/phpdoc-parser": "^1.15",
         "phpstan/phpstan-phpunit": "^1.3",
         "phpstan/extension-installer": "^1.2",
         "friendsofphp/php-cs-fixer": "^3.13",
-        "phpunit/phpunit": "<=10.0.15",
-        "symfony/framework-bundle": "^5.4 || ^6.0 || ^6.2",
-        "symfony/yaml": "^5.4 || ^6.0 || ^6.2",
+        "phpunit/phpunit": "9.6.7",
+        "symfony/framework-bundle": "5.4.*",
+        "symfony/yaml": "5.4.*",
         "predis/predis": "^2.1"
     },
     "license": "MIT",
@@ -46,8 +36,7 @@
     "authors": [
         {
             "name": "patrykbaszak",
-            "email": "patryk.baszak@gmail.com",
-            "homepage": "https://patrykbaszak.pl"
+            "email": "patryk.baszak@gmail.com"
         }
     ],
     "config": {

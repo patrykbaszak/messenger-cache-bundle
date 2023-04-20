@@ -11,8 +11,21 @@ class InvalidateAsync
      * @param string|null $pool if `null` all TagAwareAdapters are used
      */
     public function __construct(
-        public readonly array $tags = [],
-        public readonly ?string $pool = null
+        private array $tags = [],
+        private ?string $pool = null
     ) {
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getTags(): array
+    {
+        return $this->tags;
+    }
+
+    public function getPool(): ?string
+    {
+        return $this->pool;
     }
 }

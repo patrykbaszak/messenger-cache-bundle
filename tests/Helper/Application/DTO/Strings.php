@@ -7,7 +7,7 @@ namespace PBaszak\MessengerCacheBundle\Tests\Helper\Application\DTO;
 class Strings
 {
     public function __construct(
-        public readonly array $strings
+        public array $strings
     ) {
     }
 }
