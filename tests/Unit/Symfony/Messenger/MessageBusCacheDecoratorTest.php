@@ -26,9 +26,13 @@ class MessageBusCacheDecoratorTest extends KernelTestCase
     {
         $this->assertInstanceOf(LoggingMessageBusDecorator::class, $this->messageBus);
         $this->assertInstanceOf(MessageBusCacheEventsDecorator::class, $this->messageBus->decorated);
-        $decorator = (new \ReflectionObject($this->messageBus->decorated))->getProperty('decorated')->getValue($this->messageBus->decorated);
+        $decorator = (new \ReflectionObject($this->messageBus->decorated))->getProperty('decorated');
+        $decorator->setAccessible(true);
+        $decorator = $decorator->getValue($this->messageBus->decorated);
         $this->assertInstanceOf(MessageBusCacheDecorator::class, $decorator);
-        $messageBus = (new \ReflectionObject($decorator))->getProperty('decorated')->getValue($decorator);
+        $messageBus = (new \ReflectionObject($decorator))->getProperty('decorated');
+        $messageBus->setAccessible(true);
+        $messageBus = $messageBus->getValue($decorator);
         $this->assertInstanceOf(MessageBusInterface::class, $messageBus);
     }
 }

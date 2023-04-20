@@ -15,11 +15,11 @@ class Invalidate
      * @param bool        $invalidateAsync          if `true` then cache is invalidated asynchronously
      */
     public function __construct(
-        public readonly array $tags = [],
-        public readonly ?string $pool = null,
-        public readonly bool $invalidateBeforeDispatch = false,
-        public readonly bool $invalidateOnException = false,
-        public readonly bool $invalidateAsync = false,
+        public array $tags = [],
+        public ?string $pool = null,
+        public bool $invalidateBeforeDispatch = false,
+        public bool $invalidateOnException = false,
+        public bool $invalidateAsync = false,
     ) {
     }
 }

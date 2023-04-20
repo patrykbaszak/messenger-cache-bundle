@@ -1,10 +1,37 @@
 version: '3'
 
 services:
-    fpm:
+    app:
         build:
             context: .
             dockerfile: ./docker/php/Dockerfile
+        volumes: 
+            - .:/app:cached
+        working_dir: /app
+        env_file:
+            - .env.local
+    app80:
+        build:
+            context: .
+            dockerfile: ./docker/php/php80.Dockerfile
+        volumes: 
+            - .:/app:cached
+        working_dir: /app
+        env_file:
+            - .env.local
+    app81:
+        build:
+            context: .
+            dockerfile: ./docker/php/php81.Dockerfile
+        volumes: 
+            - .:/app:cached
+        working_dir: /app
+        env_file:
+            - .env.local
+    app82:
+        build:
+            context: .
+            dockerfile: ./docker/php/php82.Dockerfile
         volumes: 
             - .:/app:cached
         working_dir: /app

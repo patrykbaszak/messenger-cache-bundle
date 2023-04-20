@@ -17,7 +17,7 @@ class InMemoryCacheTest extends KernelTestCase
 {
     use HandleTrait;
 
-    private AdapterInterface&ArrayAdapter $cache;
+    private ArrayAdapter $cache;
 
     protected function setUp(): void
     {

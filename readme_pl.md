@@ -1,5 +1,9 @@
 # Messenger Cache Bundle #
 
+## Przetestowane wsparcie ##
+- **PHP 8.0** - **PHP 8.2**
+- **Symfony 5.4** - **Symfony 6.2**
+ 
 ## Instalacja ##
 
 ```sh

@@ -13,8 +13,21 @@ class RefreshAsync
      * @param StampInterface[] $stamps
      */
     public function __construct(
-        public readonly Cacheable $message,
-        public readonly array $stamps = []
+        private Cacheable $message,
+        private array $stamps = []
     ) {
+    }
+
+    public function getMessage(): Cacheable
+    {
+        return $this->message;
+    }
+
+    /**
+     * @return StampInterface[]
+     */
+    public function getStamps(): array
+    {
+        return $this->stamps;
     }
 }
