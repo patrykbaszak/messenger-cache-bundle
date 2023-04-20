@@ -3,7 +3,7 @@
 ## Instalacja ##
 
 ```sh
-composer require pbaszak/messenger-cache-bundle
+composer require pbaszak/symfony-messenger-cache-bundle
 ```
 W pliku `config/bundles.php`
 ```php
