@@ -9,7 +9,7 @@
 ```sh
 composer require pbaszak/symfony-messenger-cache-bundle
 ```
-W pliku `config/bundles.php`
+In the `config/bundles.php` file:
 ```php
 <?php
 
