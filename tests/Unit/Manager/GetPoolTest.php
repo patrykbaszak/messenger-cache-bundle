@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Tests\Unit\Manager;
 
+use LogicException;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Cache\Adapter\RedisTagAwareAdapter;
@@ -32,7 +33,7 @@ class GetPoolTest extends KernelTestCase
     /** @test */
     public function shouldThrowLogicExceptionIfPoolDoesNotExist(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Pool "non_existing_pool" is not configured.');
 
         $this->manager->getPool('non_existing_pool');
