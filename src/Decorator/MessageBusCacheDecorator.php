@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Decorator;
 
+use LogicException;
 use PBaszak\MessengerCacheBundle\Attribute\Invalidate;
 use PBaszak\MessengerCacheBundle\Contract\Optional\CacheableCallback;
 use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags;
@@ -13,9 +14,11 @@ use PBaszak\MessengerCacheBundle\Contract\Required\Cacheable;
 use PBaszak\MessengerCacheBundle\Contract\Required\CacheInvalidation;
 use PBaszak\MessengerCacheBundle\Message\InvalidateAsync;
 use PBaszak\MessengerCacheBundle\Stamps\InvalidationResultsStamp;
+use ReflectionClass;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\StampInterface;
+use Throwable;
 
 class MessageBusCacheDecorator implements MessageBusInterface
 {
@@ -66,9 +69,9 @@ class MessageBusCacheDecorator implements MessageBusInterface
      */
     private function dispatchCacheInvalidationMessage(CacheInvalidation $message, array $stamps): Envelope
     {
-        $invalidates = (new \ReflectionClass($message))->getAttributes(Invalidate::class);
+        $invalidates = (new ReflectionClass($message))->getAttributes(Invalidate::class);
         if (empty($invalidates)) {
-            throw new \LogicException('CacheInvalidation message must have at least one Invalidate attribute.');
+            throw new LogicException('CacheInvalidation message must have at least one Invalidate attribute.');
         }
         $invalidates = array_map(fn ($invalidate): Invalidate => $invalidate->newInstance(), $invalidates);
 
@@ -94,7 +97,7 @@ class MessageBusCacheDecorator implements MessageBusInterface
         try {
             /** @var Envelope */
             $envelope = $this->decorated->dispatch($message, $stamps);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             throw $exception;
         } finally {
             foreach ($invalidates as $invalidate) {

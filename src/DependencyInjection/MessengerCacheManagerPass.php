@@ -6,6 +6,7 @@ namespace PBaszak\MessengerCacheBundle\DependencyInjection;
 
 use PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheDecorator;
 use PBaszak\MessengerCacheBundle\Decorator\MessageBusCacheEventsDecorator;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\DependencyInjection\Configuration as FrameworkConfiguration;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -91,7 +92,7 @@ class MessengerCacheManagerPass implements CompilerPassInterface
         $pools['default'] ??= $pools['app'] ?? null;
 
         if (null === $pools['default']) {
-            throw new \RuntimeException('No default cache pool found. Please configure one of the following: "messenger_cache.pools.default" or "framework.cache.pools.app".');
+            throw new RuntimeException('No default cache pool found. Please configure one of the following: "messenger_cache.pools.default" or "framework.cache.pools.app".');
         }
 
         return array_filter($pools);

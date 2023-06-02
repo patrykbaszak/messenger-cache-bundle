@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Manager;
 
+use InvalidArgumentException;
+use LogicException;
 use PBaszak\MessengerCacheBundle\Attribute\Cache;
 use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTags;
 use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicTtl;
@@ -15,6 +17,7 @@ use PBaszak\MessengerCacheBundle\Stamps\CacheItemMissStamp;
 use PBaszak\MessengerCacheBundle\Stamps\CacheItemTagsStamp;
 use PBaszak\MessengerCacheBundle\Stamps\CacheRefreshTriggeredStamp;
 use PBaszak\MessengerCacheBundle\Stamps\ForceCacheRefreshStamp;
+use ReflectionClass;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
@@ -53,7 +56,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     public function getPool(string $pool): AdapterInterface
     {
         if (!isset($this->pools[$pool])) {
-            throw new \LogicException(sprintf('Pool "%s" is not configured.', $pool));
+            throw new LogicException(sprintf('Pool "%s" is not configured.', $pool));
         }
 
         return $this->pools[$pool];
@@ -130,11 +133,11 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     public function delete(string $cacheKey, string $pool = null, Cache $cache = null, Cacheable $message = null): bool
     {
         if (empty(array_filter([$pool, $cache, $message]))) {
-            throw new \LogicException('At least one argument is required in addition to cacheKey.');
+            throw new LogicException('At least one argument is required in addition to cacheKey.');
         }
 
         if ($message && !$cache && !$pool) {
-            $cache = (new \ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+            $cache = (new ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
             $pool = $cache->pool;
         }
 
@@ -151,11 +154,11 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     public function clear(string $prefix = '', string $pool = null, Cache $cache = null, Cacheable $message = null): bool
     {
         if (empty(array_filter([$pool, $cache, $message]))) {
-            throw new \LogicException('At least one argument is required in addition to cacheKey.');
+            throw new LogicException('At least one argument is required in addition to cacheKey.');
         }
 
         if ($message && !$cache && !$pool) {
-            $cache = (new \ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+            $cache = (new ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
             $pool = $cache->pool;
         }
 
@@ -170,12 +173,12 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     }
 
     /**
-     * @throws \InvalidArgumentException When $tags is not valid
+     * @throws InvalidArgumentException When $tags is not valid
      */
     public function invalidate(array $tags = [], string $pool = null): array
     {
         if (empty($tags)) {
-            throw new \InvalidArgumentException('The tags array cannot be empty.');
+            throw new InvalidArgumentException('The tags array cannot be empty.');
         }
 
         $result = [];
@@ -190,21 +193,21 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         return $result;
     }
 
-    /** @throws \LogicException if Cache attribute is not declared. */
+    /** @throws LogicException if Cache attribute is not declared. */
     private function extractCacheAttribute(Cacheable $message): Cache
     {
         try {
-            return (new \ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
+            return (new ReflectionClass($message))->getAttributes(Cache::class)[0]->newInstance();
         } catch (Throwable) {
-            throw new \LogicException(sprintf('The %s class has not declared the %s attribute which is required.', get_class($message), Cache::class));
+            throw new LogicException(sprintf('The %s class has not declared the %s attribute which is required.', get_class($message), Cache::class));
         }
     }
 
-    /** @throws \LogicException if pool is not configured. */
+    /** @throws LogicException if pool is not configured. */
     private function getCorrectPool(string $pool = null): AdapterInterface
     {
         if ($pool && !in_array($pool, array_keys($this->pools), true)) {
-            throw new \LogicException(sprintf('The %s pool is not configured.', $pool));
+            throw new LogicException(sprintf('The %s pool is not configured.', $pool));
         }
 
         /** @var AdapterInterface */
@@ -235,12 +238,12 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     /**
      * @param StampInterface[] $stamps
      *
-     * @throws \LogicException if message bus is not set
+     * @throws LogicException if message bus is not set
      */
     private function dispatchAsyncCacheRefresh(Cacheable $message, array $stamps): void
     {
         if (!isset($this->messageBus)) {
-            throw new \LogicException('The message bus is not declared. You have to call $cacheManager->setMessageBus($messageBus) in Your MessageBus decorator to use the async cache refresh.');
+            throw new LogicException('The message bus is not declared. You have to call $cacheManager->setMessageBus($messageBus) in Your MessageBus decorator to use the async cache refresh.');
         }
 
         $this->messageBus->dispatch(

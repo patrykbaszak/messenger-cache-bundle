@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Attribute;
 
-#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
+use Attribute;
+
+#[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 class Invalidate
 {
     /**
