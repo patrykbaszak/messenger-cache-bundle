@@ -30,7 +30,7 @@ class CacheInvalidationEvent extends Event
      *
      * @return StampInterface[]
      */
-    public function getOriginStamps(?string $stampFqcn = null): array
+    public function getOriginStamps(string $stampFqcn = null): array
     {
         if (!$stampFqcn) {
             return $this->stamps;
@@ -51,7 +51,7 @@ class CacheInvalidationEvent extends Event
      *
      * @return StampInterface[]|array<StampInterface[]>
      */
-    public function getStamps(?string $stampFqcn = null): array
+    public function getStamps(string $stampFqcn = null): array
     {
         return $this->envelope->all($stampFqcn);
     }
@@ -59,7 +59,7 @@ class CacheInvalidationEvent extends Event
     /**
      * @return string[]
      */
-    public function getInvalidatedTags(?string $pool = null): array
+    public function getInvalidatedTags(string $pool = null): array
     {
         $tags = [];
         foreach ($this->envelope->all(InvalidationResultsStamp::class) as $stamp) {
@@ -76,7 +76,7 @@ class CacheInvalidationEvent extends Event
     /**
      * @return array<string, mixed>
      */
-    public function getInvalidationResults(?string $pool = null): array
+    public function getInvalidationResults(string $pool = null): array
     {
         $results = [];
         foreach ($this->envelope->all(InvalidationResultsStamp::class) as $stamp) {
