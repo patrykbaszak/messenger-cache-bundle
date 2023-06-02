@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PBaszak\MessengerCacheBundle\Provider;
 
+use PBaszak\MessengerCacheBundle\Contract\Optional\DynamicKeyPart;
 use PBaszak\MessengerCacheBundle\Contract\Optional\HashableInstance;
 use PBaszak\MessengerCacheBundle\Contract\Optional\UniqueHash;
 use PBaszak\MessengerCacheBundle\Contract\Replaceable\MessengerCacheKeyProviderInterface;
@@ -28,6 +29,7 @@ class CacheKeyProvider implements MessengerCacheKeyProviderInterface
                 array_filter(
                     [
                         hash($this->hashAlgo, get_class($message)),
+                        $message instanceof DynamicKeyPart ? $message->getDynamicKeyPart() : null,
                         $message instanceof UniqueHash ? $message->getUniqueHash() : hash(
                             $this->hashAlgo,
                             serialize($message instanceof HashableInstance ? $message->getHashableInstance() : $message)
@@ -46,6 +48,7 @@ class CacheKeyProvider implements MessengerCacheKeyProviderInterface
             array_filter(
                 [
                     (string) crc32(get_class($message)),
+                    $message instanceof DynamicKeyPart ? $message->getDynamicKeyPart() : null,
                     $message instanceof UniqueHash ? $message->getUniqueHash() : (string) crc32(
                         serialize($message instanceof HashableInstance ? $message->getHashableInstance() : $message)
                     ),
