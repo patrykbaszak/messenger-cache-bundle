@@ -35,7 +35,7 @@ class CacheEvent extends Event
      *
      * @return StampInterface[]
      */
-    public function getOriginStamps(?string $stampFqcn = null): array
+    public function getOriginStamps(string $stampFqcn = null): array
     {
         if (!$stampFqcn) {
             return $this->stamps;
@@ -56,7 +56,7 @@ class CacheEvent extends Event
      *
      * @return StampInterface[]|array<StampInterface[]>
      */
-    public function getStamps(?string $stampFqcn = null): array
+    public function getStamps(string $stampFqcn = null): array
     {
         return $this->envelope->all($stampFqcn);
     }

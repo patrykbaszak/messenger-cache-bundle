@@ -26,9 +26,9 @@ interface MessengerCacheManagerInterface
      */
     public function get(Cacheable $message, array $stamps, string $cacheKey, callable $callback): Envelope;
 
-    public function delete(string $cacheKey, ?string $pool = null, ?Cache $cache = null, ?Cacheable $message = null): bool;
+    public function delete(string $cacheKey, string $pool = null, Cache $cache = null, Cacheable $message = null): bool;
 
-    public function clear(string $prefix = '', ?string $pool = null, ?Cache $cache = null, ?Cacheable $message = null): bool;
+    public function clear(string $prefix = '', string $pool = null, Cache $cache = null, Cacheable $message = null): bool;
 
     /**
      * @param string[]    $tags
@@ -36,5 +36,5 @@ interface MessengerCacheManagerInterface
      *
      * @return array<string,array<string,bool>> The invalidated tags. ['tag' => ['pool_alias' => true]]
      */
-    public function invalidate(array $tags, ?string $pool = null): array;
+    public function invalidate(array $tags, string $pool = null): array;
 }

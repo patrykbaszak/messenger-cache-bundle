@@ -127,7 +127,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         return $item->get()->value->with(...$resultsStamps);
     }
 
-    public function delete(string $cacheKey, ?string $pool = null, ?Cache $cache = null, ?Cacheable $message = null): bool
+    public function delete(string $cacheKey, string $pool = null, Cache $cache = null, Cacheable $message = null): bool
     {
         if (empty(array_filter([$pool, $cache, $message]))) {
             throw new \LogicException('At least one argument is required in addition to cacheKey.');
@@ -148,7 +148,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
         return $pool->deleteItem($cacheKey);
     }
 
-    public function clear(string $prefix = '', ?string $pool = null, ?Cache $cache = null, ?Cacheable $message = null): bool
+    public function clear(string $prefix = '', string $pool = null, Cache $cache = null, Cacheable $message = null): bool
     {
         if (empty(array_filter([$pool, $cache, $message]))) {
             throw new \LogicException('At least one argument is required in addition to cacheKey.');
@@ -170,11 +170,9 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     }
 
     /**
-     * {@inheritdoc}
-     *
      * @throws \InvalidArgumentException When $tags is not valid
      */
-    public function invalidate(array $tags = [], ?string $pool = null): array
+    public function invalidate(array $tags = [], string $pool = null): array
     {
         if (empty($tags)) {
             throw new \InvalidArgumentException('The tags array cannot be empty.');
@@ -203,7 +201,7 @@ class MessengerCacheManager implements MessengerCacheManagerInterface
     }
 
     /** @throws \LogicException if pool is not configured. */
-    private function getCorrectPool(?string $pool = null): AdapterInterface
+    private function getCorrectPool(string $pool = null): AdapterInterface
     {
         if ($pool && !in_array($pool, array_keys($this->pools), true)) {
             throw new \LogicException(sprintf('The %s pool is not configured.', $pool));
